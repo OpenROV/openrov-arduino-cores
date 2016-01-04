@@ -202,42 +202,40 @@ uint32_t analogRead( uint32_t ulPin )
 // to digital output.
 void analogWrite( uint32_t ulPin, uint32_t ulValue )
 {
+   // Basically, this function will attempt to do an analog write, a PWM set, or default to a digital high or low output
+   
   uint32_t attr = g_APinDescription[ulPin].ulPinAttribute ;
 
-  if ( (attr & PIN_ATTR_ANALOG) == PIN_ATTR_ANALOG )
+  // Handle analog outputs
+  if( (attr & PIN_ATTR_ANALOG) == PIN_ATTR_ANALOG )
   {
-    if ( ulPin != DAC0 )  // Only 1 DAC on (PA02) DAC0
-    {
-      return;
-    }
-
-    ulValue = mapResolution(ulValue, _writeResolution, 10);
-
-    syncDAC();
-    DAC->DATA.reg = ulValue & 0x3FF;  // DAC on 10 bits.
-    syncDAC();
-    DAC->CTRLA.bit.ENABLE = 0x01;     // Enable DAC
-    syncDAC();
+    // We don't have any analog outputs, this is wrong
     return ;
   }
 
-  if ( (attr & PIN_ATTR_PWM) == PIN_ATTR_PWM )
+  // Handle PWM outputs
+  if( ( attr & PIN_ATTR_PWM ) == PIN_ATTR_PWM )
   {
+      
+    // Not sure exactly what this does yet
     if ( (g_APinDescription[ulPin].ulPinType == PIO_TIMER) || g_APinDescription[ulPin].ulPinType == PIO_TIMER_ALT )
     {
       pinPeripheral( ulPin, g_APinDescription[ulPin].ulPinType ) ;
     }
 
-    Tc*  TCx  = 0 ;
-    Tcc* TCCx = 0 ;
+    Tc*  TCx  = 0;
+    Tcc* TCCx = 0;
+    
     uint8_t Channelx = GetTCChannelNumber( g_APinDescription[ulPin].ulPWMChannel ) ;
-    if ( GetTCNumber( g_APinDescription[ulPin].ulPWMChannel ) >= TCC_INST_NUM )
+    
+    // Get the TC or TCC instance number, depending on which type of timer it uses
+    if( GetTCNumber( g_APinDescription[ulPin].ulPWMChannel ) >= TCC_INST_NUM )
     {
-      TCx = (Tc*) GetTC( g_APinDescription[ulPin].ulPWMChannel ) ;
+        TCx = (Tc*) GetTC( g_APinDescription[ulPin].ulPWMChannel ) ;
     }
     else
     {
-      TCCx = (Tcc*) GetTC( g_APinDescription[ulPin].ulPWMChannel ) ;
+        TCCx = (Tcc*) GetTC( g_APinDescription[ulPin].ulPWMChannel ) ;
     }
 
     // Enable clocks according to TCCx instance to use

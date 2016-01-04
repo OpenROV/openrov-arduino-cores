@@ -29,16 +29,15 @@ void initVariant() { }
  */
 int main( void )
 {
+  // From wiring.c
   init();
 
+  // Can be defined in variant.h/c
   initVariant();
 
   delay(1);
-#if defined(USBCON)
-  USBDevice.init();
-  USBDevice.attach();
-#endif
 
+  // Sketch functions
   setup();
 
   for (;;)

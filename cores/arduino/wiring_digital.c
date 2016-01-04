@@ -22,6 +22,7 @@
  extern "C" {
 #endif
 
+// This also applies to analog pins, not just digital.
 void pinMode( uint32_t ulPin, uint32_t ulMode )
 {
   // Handle the case the pin isn't usable as PIO

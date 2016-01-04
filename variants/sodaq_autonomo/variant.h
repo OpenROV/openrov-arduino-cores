@@ -50,10 +50,10 @@ extern "C"
  *----------------------------------------------------------------------------*/
 
 // Number of pins defined in PinDescription array
-#define PINS_COUNT           (49u)
-#define NUM_DIGITAL_PINS     (16u)
-#define NUM_ANALOG_INPUTS    (15u)
-#define NUM_ANALOG_OUTPUTS   (1u)
+#define PINS_COUNT           (64u)
+#define NUM_DIGITAL_PINS     (7u)
+#define NUM_ANALOG_INPUTS    (12u)
+#define NUM_ANALOG_OUTPUTS   (0u)
 
 #define digitalPinToPort(P)        ( &(PORT->Group[g_APinDescription[P].ulPort]) )
 #define digitalPinToBitMask(P)     ( 1 << g_APinDescription[P].ulPin )
@@ -76,106 +76,103 @@ extern "C"
 #define digitalPinToInterrupt(P)   ( g_APinDescription[P].ulExtInt )
 
 // LEDs
-#define PIN_LED_13           (13u)
-#define PIN_LED              PIN_LED_13
-#define LED_BUILTIN          PIN_LED_13
+#define PIN_LED_0          (30u)
+#define PIN_LED_1          (28u)
+#define PIN_LED             PIN_LED_0
+#define LED_BUILTIN         PIN_LED_0
 
-/*
- * Analog pins
- */
-#define PIN_A0               (19ul)
-#define PIN_A1               (PIN_A0 + 1)
-#define PIN_A2               (PIN_A0 + 2)
-#define PIN_A3               (PIN_A0 + 3)
-#define PIN_A4               (PIN_A0 + 4)
-#define PIN_A5               (PIN_A0 + 5)
-#define PIN_A6               (PIN_A0 + 6)
-#define PIN_A7               (PIN_A0 + 7)
-#define PIN_A8               (PIN_A0 + 8)
-#define PIN_A9               (PIN_A0 + 9)
-#define PIN_A10              (PIN_A0 + 10)
-#define PIN_A11              (PIN_A0 + 11)
-#define PIN_A12              (PIN_A0 + 12)
-#define PIN_A13              (PIN_A0 + 13)
+// Other GPIO
+#define PIN_EN_PROGRAM          (31u)
+#define PIN_EN_INTI2C           (50u)
+#define PIN_EN_EXTI2C           (49u)
+#define PIN_EN_ESC              (41u)
+#define PIN_ESC_PRECHARGE       (48u)
+
+// Analog Pins
+#define PIN_A0               (2u)
+#define PIN_A1               (3u)
+#define PIN_A2               (10u)
+#define PIN_A3               (11u)
+// #define PIN_A4               (PIN_A0 + 4)
+// #define PIN_A5               (PIN_A0 + 5)
+// #define PIN_A6               (PIN_A0 + 6)
+// #define PIN_A7               (PIN_A0 + 7)
+#define PIN_A8               (60u)
+#define PIN_A9               (61u)
+#define PIN_A10              (62u)
+#define PIN_A11              (63u)
+#define PIN_A12              (4u)
+#define PIN_A13              (5u)
+#define PIN_A14              (8u)
+#define PIN_A15              (9u)
 
 static const uint8_t A0  = PIN_A0 ;
 static const uint8_t A1  = PIN_A1 ;
 static const uint8_t A2  = PIN_A2 ;
 static const uint8_t A3  = PIN_A3 ;
-static const uint8_t A4  = PIN_A4 ;
-static const uint8_t A5  = PIN_A5 ;
-static const uint8_t A6  = PIN_A6 ;
-static const uint8_t A7  = PIN_A7 ;
+// static const uint8_t A4  = PIN_A4 ;
+// static const uint8_t A5  = PIN_A5 ;
+// static const uint8_t A6  = PIN_A6 ;
+// static const uint8_t A7  = PIN_A7 ;
 static const uint8_t A8  = PIN_A8 ;
 static const uint8_t A9  = PIN_A9 ;
 static const uint8_t A10 = PIN_A10 ;
 static const uint8_t A11 = PIN_A11 ;
 static const uint8_t A12 = PIN_A12 ;
 static const uint8_t A13 = PIN_A13 ;
+static const uint8_t A14 = PIN_A14 ;
+static const uint8_t A15 = PIN_A15 ;
+
 #define ADC_RESOLUTION      12
 
-/*
- * Serial interfaces
- */
-// Serial
-#define PIN_SERIAL_RX       (0ul)
-#define PIN_SERIAL_TX       (1ul)
-#define PAD_SERIAL_TX       (UART_TX_PAD_2)
+// UART Interfaces
+
+// UART0 (Primary Serial Port wth CTS+RTS)
+#define PIN_SERIAL_RX       (13u)
+#define PIN_SERIAL_TX       (12u)
+#define PIN_SERIAL_RTS      (14u)
+#define PIN_SERIAL_CTS      (15u)
+#define PAD_SERIAL_TX       (UART_TX_RTS_CTS_PAD_0_2_3)
 #define PAD_SERIAL_RX       (SERCOM_RX_PAD_1)
 
-// Serial1
-#define PIN_SERIAL1_RX       (37ul)
-#define PIN_SERIAL1_TX       (36ul)
-#define PAD_SERIAL1_TX       (UART_TX_RTS_CTS_PAD_0_2_3)
+// UART1 (Programming/aux serial port)
+#define PIN_SERIAL1_RX       (43u)
+#define PIN_SERIAL1_TX       (42u)
+#define PAD_SERIAL1_TX       (UART_TX_PAD_0)
 #define PAD_SERIAL1_RX       (SERCOM_RX_PAD_1)
 
-// Other Bee socket pins
-static const uint8_t RTS = (38u);
-static const uint8_t CTS = (39u);
-
-static const uint8_t DTR = PIN_A13;
-static const uint8_t RI_AS = (18u);
-
-/*
- * SPI Interfaces
- */
+// SPI interfaces
 #define SPI_INTERFACES_COUNT 1
 
-#define PIN_SPI_MISO         (42u)
-#define PIN_SPI_SS           (43u)
-#define PIN_SPI_MOSI         (44u)
-#define PIN_SPI_SCK          (45u)
+#define PIN_SPI_MISO         (40u)
+// #define PIN_SPI_SS           (43u)
+#define PIN_SPI_MOSI         (38u)
+#define PIN_SPI_SCK          (39u)
 
 static const uint8_t MISO = PIN_SPI_MISO;
-static const uint8_t SS	  = PIN_SPI_SS ;
+// static const uint8_t SS	  = PIN_SPI_SS ;
 static const uint8_t MOSI = PIN_SPI_MOSI ;
 static const uint8_t SCK  = PIN_SPI_SCK ;
 
-// SD Card CS/SS pin
-static const uint8_t SS_2 = (46u);
 
 // Other Digital Pins
 static const uint8_t VCC_SW  = (16u);
 static const uint8_t BEE_VCC = (17u);
 
+// TODO: ???
 // Other Analog Pins
-static const uint8_t BAT_VOLT = (33u);
-static const uint8_t AREF     = (34u);
-static const uint8_t DAC0     = PIN_A0; // or (35u) implications for cores/arduino/wiring_analog.c analogWrite()
+static const uint8_t BAT_VOLT = (6u);
+static const uint8_t AREF     = (7u);
+static const uint8_t DAC0     = PIN_A0; // or (35u) implications for cores/arduino/wiring_analog.c analogWrite() 
 
-/*
- * Wire Interfaces
- */
-#define WIRE_INTERFACES_COUNT 1
+// I2C Interfaces
+#define WIRE_INTERFACES_COUNT 2
 
-#define PIN_WIRE_SDA         (40u)
-#define PIN_WIRE_SCL         (41u)
+#define PIN_WIRE_SDA         (28u)
+#define PIN_WIRE_SCL         (29u)
 
-/*
- * USB
- */
-#define PIN_USB_DM          (47ul)
-#define PIN_USB_DP          (48ul)
+#define PIN_WIRE1_SDA         (16u)
+#define PIN_WIRE1_SCL         (17u)
 
 #ifdef __cplusplus
 }
@@ -228,10 +225,14 @@ extern Uart Serial1;
 #define SERIAL_PORT_HARDWARE1       Serial1
 #define SERIAL_PORT_HARDWARE_OPEN1  Serial1
 
-#define PERIPH_WIRE          sercom2
-#define WIRE_IT_HANDLER      SERCOM2_Handler
+#define PERIPH_WIRE          sercom4
+#define WIRE_IT_HANDLER      SERCOM4_Handler
 
-#define PERIPH_SPI           sercom3
+#define PERIPH_WIRE_1          sercom2
+#define WIRE_IT_HANDLER_1      SERCOM2_Handler
+
+// TODO: What the hell is this
+#define PERIPH_SPI           sercom5
 #define PAD_SPI_TX           SPI_PAD_2_SCK_3
 #define PAD_SPI_RX           SERCOM_RX_PAD_0
 
