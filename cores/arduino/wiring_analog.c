@@ -226,9 +226,10 @@ void analogWrite( uint32_t ulPin, uint32_t ulValue )
     Tc*  TCx  = 0;
     Tcc* TCCx = 0;
     
+	// Get channel number for the Timer attached to the specified pin
     uint8_t Channelx = GetTCChannelNumber( g_APinDescription[ulPin].ulPWMChannel ) ;
     
-    // Get the TC or TCC instance number, depending on which type of timer it uses
+    // Get the TC or TCC instance, depending on which type of timer it uses
     if( GetTCNumber( g_APinDescription[ulPin].ulPWMChannel ) >= TCC_INST_NUM )
     {
         TCx = (Tc*) GetTC( g_APinDescription[ulPin].ulPWMChannel ) ;
