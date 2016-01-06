@@ -126,7 +126,7 @@ void SystemInit( void )
 	SYSCTRL->DFLLCTRL.bit.ONDEMAND = 0;
 	
 	/* wait for the DFLL clock to be ready */
-	while (SYSCTRL->PCLKSR.bit.DFLLRDY == false)
+	while (SYSCTRL->PCLKSR.bit.DFLLRDY == 0)
 	{
 		asm( "nop" );
 	}
