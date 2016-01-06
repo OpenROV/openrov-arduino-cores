@@ -133,23 +133,23 @@ void SystemInit( void )
 	
 	SYSCTRL_DFLLCTRL_Type dfllctrl =
 	{
-		.bit.WAITLOCK = false,  /* Output clock when DFLL is locked */
-		.bit.BPLCKC = false,    /* Bypass coarse lock is enabled */
-		.bit.QLDIS = true,      /* Quick Lock is disabled */
-		.bit.CCDIS = false,     /* Chill Cycle is disabled */
-		.bit.ONDEMAND = false,  /* The oscillator is enabled when a peripheral is requesting the oscillator to be used as a clock source */
-		.bit.RUNSTDBY = false,  /* The oscillator is not stopped in standby sleep mode */
-		.bit.USBCRM = false,    /* USB Clock Recovery Mode is enabled. */
-		.bit.LLAW = false,      /* Locks will be lost after waking up from sleep modes if the DFLL clock has been stopped */
-		.bit.STABLE = false,    /* FINE calibration register value will be fixed after a fine lock */
-		.bit.MODE = true,       /* The DFLL operates in closed-loop operation. */
-		.bit.ENABLE = false,    /* The DFLL oscillator is enabled. */
+		.bit.WAITLOCK = 0,  /* Output clock when DFLL is locked */
+		.bit.BPLCKC = 0,    /* Bypass coarse lock is enabled */
+		.bit.QLDIS = 1,      /* Quick Lock is disabled */
+		.bit.CCDIS = 0,     /* Chill Cycle is disabled */
+		.bit.ONDEMAND = 0,  /* The oscillator is enabled when a peripheral is requesting the oscillator to be used as a clock source */
+		.bit.RUNSTDBY = 0,  /* The oscillator is not stopped in standby sleep mode */
+		.bit.USBCRM = 0,    /* USB Clock Recovery Mode is enabled. */
+		.bit.LLAW = 0,      /* Locks will be lost after waking up from sleep modes if the DFLL clock has been stopped */
+		.bit.STABLE = 0,    /* FINE calibration register value will be fixed after a fine lock */
+		.bit.MODE = 1,       /* The DFLL operates in closed-loop operation. */
+		.bit.ENABLE = 0,    /* The DFLL oscillator is enabled. */
 	};
 	
 	SYSCTRL->DFLLCTRL.reg = dfllctrl.reg;
 	
 	/* wait for the DFLL clock to be ready */
-	while (SYSCTRL->PCLKSR.bit.DFLLRDY == false)
+	while (SYSCTRL->PCLKSR.bit.DFLLRDY == 0)
 	{
 		asm( "nop" );
 	}
@@ -176,10 +176,10 @@ void SystemInit( void )
 	SYSCTRL->DFLLMUL.reg = dfllmul.reg;
 	
 	/* enable DFLL */
-	SYSCTRL->DFLLCTRL.bit.ENABLE = true;
+	SYSCTRL->DFLLCTRL.bit.ENABLE = 1;
 	
 	/* wait for DFLL closed loop lock */
-	while (SYSCTRL->PCLKSR.bit.DFLLLCKF == false);
+	while (SYSCTRL->PCLKSR.bit.DFLLLCKF == 0);
 	{
 		asm( "nop" );
 	}
