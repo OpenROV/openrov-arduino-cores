@@ -54,6 +54,8 @@ void SystemInit( void )
 	// Turn on the Power Manager, SYSCTRL, and GCLK clocks
 	PM->APBAMASK.reg = (PM_APBAMASK_PM | PM_APBAMASK_SYSCTRL | PM_APBAMASK_GCLK);
 	
+	WDT->CTRL.bit.ENABLE = 0;
+	
 	// Set the Power Manager clock dividers
 	PM->CPUSEL.reg  = PM_CPUSEL_CPUDIV_DIV1;
 	PM->APBASEL.reg = PM_APBASEL_APBADIV_DIV1_Val;
