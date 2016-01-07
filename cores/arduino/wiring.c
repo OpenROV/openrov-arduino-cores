@@ -38,10 +38,10 @@ void init( void )
     if ( SysTick_Config( SystemCoreClock / 1000 ) )
     {
         // Capture error
-        //while ( 1 ) ;
+        while ( 1 ) ;
     }
 
-    // PM == power manager
+    // // PM == power manager
 
     // // Clock SERCOM for Serial
     // PM->APBCMASK.reg |= PM_APBCMASK_SERCOM0 | PM_APBCMASK_SERCOM1 | PM_APBCMASK_SERCOM2 | PM_APBCMASK_SERCOM3 | PM_APBCMASK_SERCOM4 | PM_APBCMASK_SERCOM5 ;
@@ -55,7 +55,7 @@ void init( void )
     // Setup digital IO pins in OUTPUT mode
     pinMode( PIN_LED_0, OUTPUT );
     pinMode( PIN_LED_1, OUTPUT );
-    pinMode( PIN_EN_PROGRAM, OUTPUT );
+    pinMode( PIN_EN_PROGRAM, INPUT );
     pinMode( PIN_EN_INTI2C, OUTPUT );
     pinMode( PIN_EN_EXTI2C, OUTPUT );
     pinMode( PIN_EN_ESC, OUTPUT );
