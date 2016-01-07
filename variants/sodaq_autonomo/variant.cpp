@@ -89,7 +89,7 @@ const PinDescription g_APinDescription[] =
 /*DUM*/	{ PORTA	, 15	, PIO_INPUT			, PIN_ATTR_DIGITAL	, No_ADC_Channel	, NOT_ON_PWM	, NOT_ON_TIMER	, EXTERNAL_INT_NONE	},	// 34	| VDDIO		
 			
 		{ PORTA	, 16	, PIO_TIMER			, PIN_ATTRIBUTE_PWM	, No_ADC_Channel	, PWM2_CH0		, TCC2_CH0		, EXTERNAL_INT_NONE	}, 	// 35	| TCC2_0, 			PWM1 (IntLights)
-		{ PORTA	, 17	, PIO_TIMER			, PIN_ATTRIBUTE_PWM	, No_ADC_Channel	, PWM2_CH1		, TCC2_CH1		, EXTERNAL_INT_NONE	} 	// 36	| TCC2_1, 			PWM2 (Lasers)
+		{ PORTA	, 17	, PIO_TIMER			, PIN_ATTRIBUTE_PWM	, No_ADC_Channel	, PWM2_CH1		, TCC2_CH1		, EXTERNAL_INT_NONE	}, 	// 36	| TCC2_1, 			PWM2 (Lasers)
 		
 		{ PORTA	, 18	, PIO_TIMER_ALT		, PIN_ATTRIBUTE_PWM	, No_ADC_Channel	, PWM0_CH2		, TCC0_CH2		, EXTERNAL_INT_NONE	}, 	// 37	| TCC0_2, 			Servo5 (Motor5)
 		{ PORTA	, 19	, PIO_TIMER_ALT		, PIN_ATTRIBUTE_PWM	, No_ADC_Channel	, PWM0_CH3		, TCC0_CH3		, EXTERNAL_INT_NONE	}, 	// 38	| TCC0_3, 			Servo6 (Motor6)
