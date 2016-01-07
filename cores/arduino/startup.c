@@ -86,138 +86,147 @@ void SystemInit( void )
 		asm( "nop" );
 	}
 	
-	// ----------------------------------------------------------------------------------------------
-	// Put OSC8M as source of Generic Clock Generator 1
+	/////////////////
+	
+	 /* ----------------------------------------------------------------------------------------------
+   * 1) Enable XOSC32K clock (External on-board 32.768Hz oscillator)
+   */
+  SYSCTRL->XOSC32K.reg = SYSCTRL_XOSC32K_STARTUP( 0x6u ) | /* cf table 15.10 of product datasheet in chapter 15.8.6 */
+                         SYSCTRL_XOSC32K_XTALEN | SYSCTRL_XOSC32K_EN32K ;
+  SYSCTRL->XOSC32K.bit.ENABLE = 1 ; /* separate call, as described in chapter 15.6.3 */
 
-	// Set GCLK1 to divide to 32khz
-	GCLK->GENDIV.reg = GCLK_GENDIV_ID( GCLK_1 ) | GCLK_GENDIV_DIV( 250 ); // Generic Clock Generator 1
-	
-	// Sync
-	while ( GCLK->STATUS.reg & GCLK_STATUS_SYNCBUSY )
-	{
-		asm( "nop" );
-	}
-	
-	// Write Generic Clock Generator 1 configuration 
-	GCLK->GENCTRL.reg = GCLK_GENCTRL_ID( GCLK_1 ) | 	// Generic Clock Generator 1
-						GCLK_GENCTRL_SRC_OSC8M | 		// Selected source is External 32KHz Oscillator
-						GCLK_GENCTRL_GENEN;				// Enable
-	
-	// Sync
-	while ( GCLK->STATUS.reg & GCLK_STATUS_SYNCBUSY )
-	{
-		asm( "nop" );
-	}
+  while ( (SYSCTRL->PCLKSR.reg & SYSCTRL_PCLKSR_XOSC32KRDY) == 0 )
+  {
+    /* Wait for oscillator stabilization */
+  }
+  
+  /* ----------------------------------------------------------------------------------------------
+   * 2) Put XOSC32K as source of Generic Clock Generator 1
+   */
+  GCLK->GENDIV.reg = GCLK_GENDIV_ID( GENERIC_CLOCK_GENERATOR_XOSC32K ) ; // Generic Clock Generator 1
 
-	// ----------------------------------------------------------------------------------------------
-   	// Put Generic Clock Generator 1 as source for Generic Clock Multiplexer 0 (DFLL48M reference
-	GCLK->CLKCTRL.reg = GCLK_CLKCTRL_ID( GENERIC_CLOCK_MULTIPLEXER_DFLL48M ) | 	// Generic Clock Multiplexer 0
-						GCLK_CLKCTRL_GEN_GCLK1 | 								// Generic Clock Generator 1 is source
-						GCLK_CLKCTRL_CLKEN;										// Enable	
+  while ( GCLK->STATUS.reg & GCLK_STATUS_SYNCBUSY )
+  {
+    /* Wait for synchronization */
+  }
 
-	// Sync
-	while ( GCLK->STATUS.reg & GCLK_STATUS_SYNCBUSY )
-	{
-		asm( "nop" );
-	}
+  /* Write Generic Clock Generator 1 configuration */
+  GCLK->GENCTRL.reg = GCLK_GENCTRL_ID( GENERIC_CLOCK_GENERATOR_XOSC32K ) | // Generic Clock Generator 1
+                      GCLK_GENCTRL_SRC_XOSC32K | // Selected source is External 32KHz Oscillator
+//                      GCLK_GENCTRL_OE | // Output clock to a pin for tests
+                      GCLK_GENCTRL_GENEN ;
 
-	// ----------------------------------------------------------------------------------------------
-	// Enable DFLL48M clock
-	
-	/* Workaround for errata 9905 */
-	SYSCTRL->DFLLCTRL.bit.ONDEMAND = 0;
-	
-	/* wait for the DFLL clock to be ready */
-	while (SYSCTRL->PCLKSR.bit.DFLLRDY == 0)
-	{
-		asm( "nop" );
-	}
-	
-	SYSCTRL_DFLLCTRL_Type dfllctrl =
-	{
-		.bit.WAITLOCK = 0,  /* Output clock when DFLL is locked */
-		.bit.BPLCKC = 0,    /* Bypass coarse lock is enabled */
-		.bit.QLDIS = 1,      /* Quick Lock is disabled */
-		.bit.CCDIS = 0,     /* Chill Cycle is disabled */
-		.bit.ONDEMAND = 0,  /* The oscillator is enabled when a peripheral is requesting the oscillator to be used as a clock source */
-		.bit.RUNSTDBY = 0,  /* The oscillator is not stopped in standby sleep mode */
-		.bit.USBCRM = 0,    /* USB Clock Recovery Mode is enabled. */
-		.bit.LLAW = 0,      /* Locks will be lost after waking up from sleep modes if the DFLL clock has been stopped */
-		.bit.STABLE = 0,    /* FINE calibration register value will be fixed after a fine lock */
-		.bit.MODE = 1,       /* The DFLL operates in closed-loop operation. */
-		.bit.ENABLE = 0,    /* The DFLL oscillator is enabled. */
-	};
-	
-	SYSCTRL->DFLLCTRL.reg = dfllctrl.reg;
-	
-	/* wait for the DFLL clock to be ready */
-	while (SYSCTRL->PCLKSR.bit.DFLLRDY == 0)
-	{
-		asm( "nop" );
-	}
-	
-	/* get the coarse and fine values stored in NVM */
-	uint32_t coarse = (*(uint32_t *)(0x806024) >> 26);
-	uint32_t fine = (*(uint32_t *)(0x806028) & 0x3FF);
-	
-	SYSCTRL_DFLLVAL_Type dfllval =
-	{
-		.bit.COARSE = coarse,
-		.bit.FINE = fine,
-	};
-	
-	SYSCTRL->DFLLVAL.reg = dfllval.reg;
-	
-	SYSCTRL_DFLLMUL_Type dfllmul =
-	{
-		.bit.MUL = 1500, /* 32KHz * 1500 = 48MHz */
-		.bit.CSTEP = (coarse >> 1), /* must be 50% or less of coarse value */
-		.bit.FSTEP = (fine >> 1), /* must be 50% or less of fine value */
-	};
-	
-	SYSCTRL->DFLLMUL.reg = dfllmul.reg;
-	
-	/* enable DFLL */
-	SYSCTRL->DFLLCTRL.bit.ENABLE = 1;
-	
-	/* wait for DFLL closed loop lock */
-	while (SYSCTRL->PCLKSR.bit.DFLLLCKF == 0);
-	{
-		asm( "nop" );
-	}
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+  while ( GCLK->STATUS.reg & GCLK_STATUS_SYNCBUSY )
+  {
+    /* Wait for synchronization */
+  }
+
+  /* ----------------------------------------------------------------------------------------------
+   * 3) Put Generic Clock Generator 1 as source for Generic Clock Multiplexer 0 (DFLL48M reference)
+   */
+  GCLK->CLKCTRL.reg = GCLK_CLKCTRL_ID( GENERIC_CLOCK_MULTIPLEXER_DFLL48M ) | // Generic Clock Multiplexer 0
+                      GCLK_CLKCTRL_GEN_GCLK1 | // Generic Clock Generator 1 is source
+                      GCLK_CLKCTRL_CLKEN ;
+
+  while ( GCLK->STATUS.reg & GCLK_STATUS_SYNCBUSY )
+  {
+    /* Wait for synchronization */
+  }
+
+  /* ----------------------------------------------------------------------------------------------
+   * 4) Enable DFLL48M clock
+   */
+
+  /* DFLL Configuration in Closed Loop mode, cf product datasheet chapter 15.6.7.1 - Closed-Loop Operation */
+
+  /* Remove the OnDemand mode, Bug http://avr32.icgroup.norway.atmel.com/bugzilla/show_bug.cgi?id=9905 */
+  SYSCTRL->DFLLCTRL.bit.ONDEMAND = 0 ;
+
+  while ( (SYSCTRL->PCLKSR.reg & SYSCTRL_PCLKSR_DFLLRDY) == 0 )
+  {
+    /* Wait for synchronization */
+  }
+
+  SYSCTRL->DFLLMUL.reg = SYSCTRL_DFLLMUL_CSTEP( 31 ) | // Coarse step is 31, half of the max value
+                         SYSCTRL_DFLLMUL_FSTEP( 511 ) | // Fine step is 511, half of the max value
+                         SYSCTRL_DFLLMUL_MUL( (VARIANT_MCK/VARIANT_MAINOSC) ) ; // External 32KHz is the reference
+
+  while ( (SYSCTRL->PCLKSR.reg & SYSCTRL_PCLKSR_DFLLRDY) == 0 )
+  {
+    /* Wait for synchronization */
+  }
+
+  /* Write full configuration to DFLL control register */
+  SYSCTRL->DFLLCTRL.reg |= SYSCTRL_DFLLCTRL_MODE | /* Enable the closed loop mode */
+                           SYSCTRL_DFLLCTRL_WAITLOCK |
+                           SYSCTRL_DFLLCTRL_QLDIS ; /* Disable Quick lock */
+
+  while ( (SYSCTRL->PCLKSR.reg & SYSCTRL_PCLKSR_DFLLRDY) == 0 )
+  {
+    /* Wait for synchronization */
+  }
+
+  /* Enable the DFLL */
+  SYSCTRL->DFLLCTRL.reg |= SYSCTRL_DFLLCTRL_ENABLE ;
+
+  while ( (SYSCTRL->PCLKSR.reg & SYSCTRL_PCLKSR_DFLLLCKC) == 0 ||
+          (SYSCTRL->PCLKSR.reg & SYSCTRL_PCLKSR_DFLLLCKF) == 0 )
+  {
+    /* Wait for locks flags */
+  }
+
+  while ( (SYSCTRL->PCLKSR.reg & SYSCTRL_PCLKSR_DFLLRDY) == 0 )
+  {
+    /* Wait for synchronization */
+  }
 
   /* ----------------------------------------------------------------------------------------------
    * 5) Switch Generic Clock Generator 0 to DFLL48M. CPU will run at 48MHz.
    */
-  GCLK->GENDIV.reg = GCLK_GENDIV_ID( GCLK_0 ) | GCLK_GENDIV_DIV( 1 ); // Generic Clock Generator 0
+  GCLK->GENDIV.reg = GCLK_GENDIV_ID( GENERIC_CLOCK_GENERATOR_MAIN ) ; // Generic Clock Generator 0
 
   while ( GCLK->STATUS.reg & GCLK_STATUS_SYNCBUSY )
   {
-    asm( "nop" );
+    /* Wait for synchronization */
   }
 
   /* Write Generic Clock Generator 0 configuration */
-  GCLK->GENCTRL.reg = GCLK_GENCTRL_ID( GCLK_0 ) | // Generic Clock Generator 0
+  GCLK->GENCTRL.reg = GCLK_GENCTRL_ID( GENERIC_CLOCK_GENERATOR_MAIN ) | // Generic Clock Generator 0
                       GCLK_GENCTRL_SRC_DFLL48M | // Selected source is DFLL 48MHz
+//                      GCLK_GENCTRL_OE | // Output clock to a pin for tests
                       GCLK_GENCTRL_IDC | // Set 50/50 duty cycle
                       GCLK_GENCTRL_GENEN ;
 
   while ( GCLK->STATUS.reg & GCLK_STATUS_SYNCBUSY )
   {
-    	asm( "nop" );
+    /* Wait for synchronization */
   }
 
+  /* ----------------------------------------------------------------------------------------------
+   * 7) Put OSC8M as source for Generic Clock Generator 3
+   */
+  GCLK->GENDIV.reg = GCLK_GENDIV_ID( GENERIC_CLOCK_GENERATOR_OSC8M ) ; // Generic Clock Generator 3
+
+  /* Write Generic Clock Generator 3 configuration */
+  GCLK->GENCTRL.reg = GCLK_GENCTRL_ID( GENERIC_CLOCK_GENERATOR_OSC8M ) | // Generic Clock Generator 3
+                      GCLK_GENCTRL_SRC_OSC8M | // Selected source is RC OSC 8MHz (already enabled at reset)
+//                      GCLK_GENCTRL_OE | // Output clock to a pin for tests
+                      GCLK_GENCTRL_GENEN ;
+
+  while ( GCLK->STATUS.reg & GCLK_STATUS_SYNCBUSY )
+  {
+    /* Wait for synchronization */
+  }
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
   SystemCoreClock=VARIANT_MCK ;
 
   /* ----------------------------------------------------------------------------------------------
