@@ -1,9 +1,9 @@
-# ROVDUINO Core for SAMD21J18A CPU
+# ROVDUINO Core for Atmel's SAMD21J18A CPU
 
 This repository containts the source code and configuration files of the Rovduino Core
 for Atmel's SAMD21 processor (used on the OpenROV Experimental Controller board).
 
-
+This is still a work in progress and is not yet ready for use publicly in Arduino projects, but it has been used to build a working blink program on a SAMD21J18A using ArduinoBuilder and BOSSA in our internal development environment.
 
 ## License and credits
 
