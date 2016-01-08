@@ -1,45 +1,16 @@
-# SODAQ Core for SAMD21 CPU
+# ROVDUINO Core for Atmel's SAMD21J18A CPU
 
-This repository containts the source code and configuration files of the SODAQ Core
-for Atmel's SAMD21 processor (used on the SODAQ Autonomo board).
+This repository containts the source code and configuration files of the Rovduino Core
+for Atmel's SAMD21 processor (used on the OpenROV Experimental Controller board).
 
-## Installation on Arduino IDE
-
-This core is available as a package in the Arduino IDE cores manager.
-You'll first have to add our SODAQ configuration.  Start the IDE and go to
-File > Preferences > Additional Boards Manager URLs.  Add the following URL
-`http://downloads.sodaq.net/package_sodaq_index.json`.  You may have to restart
-the IDE.
-
-Open the "Boards Manager" (Tools -> Board -> Boards Manager) and install the
-package called:
-
-"SODAQ SAMD Boards"
-
-## Support
-
-There is a dedicated section of the Arduino Forum for general discussion and project assistance:
-
-http://forum.arduino.cc/index.php?board=98.0
-
-## Bugs or Issues
-
-If you find a bug you can submit an issue here on github:
-
-https://github.com/arduino/SodaqCore-samd/issues
-
-SodaqCore-samd is a clone of ArduinoCore-samd, but we created a branch "autonomo"
-to add all the specific details of the SODAQ board.
-
-Before posting a new issue, please check if the same problem has been already reported by someone else
-to avoid duplicates.
-
-## Contributions
-
-Contributions are always welcome. The preferred way to receive code cotribution is by submitting a 
-Pull Request on github.
+This is still a work in progress and is not yet ready for use publicly in Arduino projects, but it has been used to build a working blink program on a SAMD21J18A using ArduinoBuilder and BOSSA in our internal development environment.
 
 ## License and credits
+
+RovduinoCore is a clone of SodaqCore-samd (For SODAQ's Autonomo board), which is a clone of ArduinoCore-samd
+
+https://github.com/SodaqMoja/SodaqCore-samd
+https://github.com/arduino/ArduinoCore-samd/
 
 This core has been developed by Arduino LLC in collaboration with Atmel.
 
