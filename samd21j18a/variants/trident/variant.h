@@ -16,8 +16,7 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#ifndef _VARIANT_SODAQ_AUTONOMO_
-#define _VARIANT_SODAQ_AUTONOMO_
+#pragma once
 
 /*----------------------------------------------------------------------------
  *        Definitions
@@ -206,6 +205,4 @@ extern Uart Serial1;
 #define PERIPH_SPI           		sercom5
 #define PAD_SPI_TX           		SPI_PAD_2_SCK_3
 #define PAD_SPI_RX           		SERCOM_RX_PAD_0
-
-#endif 
 

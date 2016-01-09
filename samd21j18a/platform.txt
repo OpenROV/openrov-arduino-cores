@@ -19,8 +19,8 @@
 # For more info:
 # https://github.com/arduino/Arduino/wiki/Arduino-IDE-1.5---3rd-party-Hardware-specification
 
-name=SODAQ SAMD (32-bits ARM Cortex-M0+) Boards
-version=1.6.1
+name=OpenROV SAMD21J18A Boards
+version=3.0.0
 
 # Compile variables
 # -----------------
