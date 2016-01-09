@@ -1,18 +1,15 @@
-# ROVDUINO Core for Atmel's SAMD21J18A CPU
+# OpenROV Custom Arduino Board Core Packages
 
-This repository containts the source code and configuration files of the Rovduino Core
-for Atmel's SAMD21 processor (used on the OpenROV Experimental Controller board).
+This repository contains Arduino-compatible board cores for OpenROV custom MCU board designs. Right now, the primary focus is on development of a core package for the SAMD21J18A for use in the OpenROV Controller Board Firmware project, but we will also be creating a custom core for our various AVR board implementations.
 
-This is still a work in progress and is not yet ready for use publicly in Arduino projects, but it has been used to build a working blink program on a SAMD21J18A using ArduinoBuilder and BOSSA in our internal development environment.
+This is still a work in progress and is not yet ready for use general use, but it has been successfully used to build a working blink program on a SAMD21J18A using ArduinoBuilder and BOSSA in our internal development environment.
 
 ## License and credits
 
-RovduinoCore is a clone of SodaqCore-samd (For SODAQ's Autonomo board), which is a clone of ArduinoCore-samd
+This project was originally cloned from SodaqCore-samd (For SODAQ's Autonomo board), which is a clone of ArduinoCore-samd
 
 https://github.com/SodaqMoja/SodaqCore-samd
 https://github.com/arduino/ArduinoCore-samd/
-
-This core has been developed by Arduino LLC in collaboration with Atmel.
 
 ```
   Copyright (c) 2015 Arduino LLC.  All right reserved.
