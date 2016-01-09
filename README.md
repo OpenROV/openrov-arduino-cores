@@ -8,7 +8,8 @@ This is still a work in progress and is not yet ready for use general use, but i
 
 This project was originally cloned from SodaqCore-samd (For SODAQ's Autonomo board), which is a clone of ArduinoCore-samd
 
-https://github.com/SodaqMoja/SodaqCore-samd
+https://github.com/SodaqMoja/SodaqCore-samd/
+
 https://github.com/arduino/ArduinoCore-samd/
 
 ```
