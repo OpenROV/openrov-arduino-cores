@@ -3,12 +3,12 @@
 
 # ctags
 # ------------------------------
-tools.ctags.path=/opt/openrov/rovduino/hardware/tools/
+tools.ctags.path=/opt/openrov/arduino/hardware/tools/
 tools.ctags.cmd.path={path}/ctags
 tools.ctags.pattern="{cmd.path}" -u --language-force=c++ -f - --c++-kinds=svpf --fields=KSTtzns --line-directives "{source_file}"
 
 # CMSIS
-compiler.arm.cmsis.path="-I/opt/openrov/rovduino/hardware/tools/CMSIS/CMSIS/Include/" "-I/opt/openrov/rovduino/hardware/tools/CMSIS/Device/ATMEL/"
+compiler.arm.cmsis.path="-I/opt/openrov/arduino/hardware/tools/CMSIS/CMSIS/Include/" "-I/opt/openrov/arduino/hardware/tools/CMSIS/Device/ATMEL/"
 
 
 
