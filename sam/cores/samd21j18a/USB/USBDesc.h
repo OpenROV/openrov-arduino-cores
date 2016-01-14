@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015 Arduino LLC.  All right reserved.
+  Copyright (c) 2014 Arduino LLC.  All right reserved.
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
@@ -16,36 +16,36 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#define ARDUINO_MAIN
-#include "Arduino.h"
+#ifndef __USBDESC_H__
+#define __USBDESC_H__
 
-// Weak empty variant initialization function.
-// May be redefined by variant files.
-void initVariant() __attribute__((weak));
-void initVariant() { }
+// CDC or HID can be enabled together.
+#define CDC_ENABLED
+#define PLUGGABLE_USB_ENABLED
 
-/*
- * \brief Main entry point of Arduino application
- */
-int main( void )
-{
-  init();
-
-  initVariant();
-
-  delay(1);
-#if defined(USBCON)
-  USBDevice.init();
-  USBDevice.attach();
+#ifdef CDC_ENABLED
+#define CDC_INTERFACE_COUNT 2
+#define CDC_ENPOINT_COUNT 3
 #endif
 
-  setup();
+// CDC
+#define CDC_ACM_INTERFACE	0	// CDC ACM
+#define CDC_DATA_INTERFACE	1	// CDC Data
+#define CDC_FIRST_ENDPOINT  1
+#define CDC_ENDPOINT_ACM	1
+#define CDC_ENDPOINT_OUT	2
+#define CDC_ENDPOINT_IN		3
 
-  for (;;)
-  {
-    loop();
-    if (serialEventRun) serialEventRun();
-  }
+#ifdef CDC_ENABLED
+#define CDC_RX CDC_ENDPOINT_OUT
+#define CDC_TX CDC_ENDPOINT_IN
+#endif
 
-  return 0;
-}
+#define ISERIAL_MAX_LEN        20
+
+// Defined string description
+#define IMANUFACTURER	1
+#define IPRODUCT    2
+#define ISERIAL    3
+
+#endif /* __USBDESC_H__ */

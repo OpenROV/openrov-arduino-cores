@@ -22,48 +22,72 @@
 extern "C" {
 #endif
 
-// System Core Clock is at 1MHz (8MHz/8) at Reset.
-// It is switched to 48MHz in the Reset Handler (startup.c)
-uint32_t SystemCoreClock = 1000000ul ;
+/*
+ * System Core Clock is at 1MHz (8MHz/8) at Reset.
+ * It is switched to 48MHz in the Reset Handler (startup.c)
+ */
+uint32_t SystemCoreClock=1000000ul ;
 
-// SAMD21J18A board initialization
-// Good to know:
-//  - At reset, ResetHandler did the system clock configuration. Core is running at 48MHz.
-//  - Watchdog is disabled by default, unless someone plays with NVM User page
-//  - During reset, all PORT lines are configured as inputs with input buffers, output buffers and pull disabled.
-
-void init( void )
+/*
+void calibrateADC()
 {
-    // Set Systick to 1ms interval, common to all Cortex-M variants
-    if ( SysTick_Config( SystemCoreClock / 1000 ) )
+  volatile uint32_t valeur = 0;
+
+  for(int i = 0; i < 5; ++i)
+  {
+    ADC->SWTRIG.bit.START = 1;
+    while( ADC->INTFLAG.bit.RESRDY == 0 || ADC->STATUS.bit.SYNCBUSY == 1 )
     {
-        // Capture error
-        while ( 1 ) ;
+      // Waiting for a complete conversion and complete synchronization
     }
 
-    // // PM == power manager
+    valeur += ADC->RESULT.bit.RESULT;
+  }
 
-    // Clock SERCOM for Serial
-    PM->APBCMASK.reg |= PM_APBCMASK_SERCOM0 | PM_APBCMASK_SERCOM1 | PM_APBCMASK_SERCOM2 | PM_APBCMASK_SERCOM3 | PM_APBCMASK_SERCOM4 | PM_APBCMASK_SERCOM5 ;
+  valeur = valeur/5;
+}*/
 
-    // Clock TC/TCC for Pulse and Analog
-    PM->APBCMASK.reg |= PM_APBCMASK_TCC0 | PM_APBCMASK_TCC1 | PM_APBCMASK_TCC2 | PM_APBCMASK_TC3 | PM_APBCMASK_TC4 | PM_APBCMASK_TC5 | PM_APBCMASK_TC6 | PM_APBCMASK_TC7;
+/*
+ * Arduino Zero board initialization
+ *
+ * Good to know:
+ *   - At reset, ResetHandler did the system clock configuration. Core is running at 48MHz.
+ *   - Watchdog is disabled by default, unless someone plays with NVM User page
+ *   - During reset, all PORT lines are configured as inputs with input buffers, output buffers and pull disabled.
+ */
+void init( void )
+{
+  uint32_t ul ;
 
-    // Clock ADC for Analog (no dac in use)
-    PM->APBCMASK.reg |= PM_APBCMASK_ADC;
+  // Set Systick to 1ms interval, common to all Cortex-M variants
+  if ( SysTick_Config( SystemCoreClock / 1000 ) )
+  {
+    // Capture error
+    while ( 1 ) ;
+  }
 
-    // Setup digital IO pins in OUTPUT mode
-    pinMode( PIN_LED_0, OUTPUT );
-    pinMode( PIN_LED_1, OUTPUT );
-    pinMode( PIN_EN_PROGRAM, INPUT );
-    pinMode( PIN_EN_INTI2C, OUTPUT );
-    pinMode( PIN_EN_EXTI2C, OUTPUT );
-    pinMode( PIN_EN_ESC, OUTPUT );
-    pinMode( PIN_ESC_PRECHARGE, OUTPUT );
-  
-  
-  // Initialize ADC Controller
-  
+  // Clock PORT for Digital I/O
+//	PM->APBBMASK.reg |= PM_APBBMASK_PORT ;
+//
+//  // Clock EIC for I/O interrupts
+//	PM->APBAMASK.reg |= PM_APBAMASK_EIC ;
+
+  // Clock SERCOM for Serial
+  PM->APBCMASK.reg |= PM_APBCMASK_SERCOM0 | PM_APBCMASK_SERCOM1 | PM_APBCMASK_SERCOM2 | PM_APBCMASK_SERCOM3 | PM_APBCMASK_SERCOM4 | PM_APBCMASK_SERCOM5 ;
+
+  // Clock TC/TCC for Pulse and Analog
+  PM->APBCMASK.reg |= PM_APBCMASK_TCC0 | PM_APBCMASK_TCC1 | PM_APBCMASK_TCC2 | PM_APBCMASK_TC3 | PM_APBCMASK_TC4 | PM_APBCMASK_TC5 ;
+
+  // Clock ADC/DAC for Analog
+  PM->APBCMASK.reg |= PM_APBCMASK_ADC | PM_APBCMASK_DAC ;
+
+  // Setup all pins (digital and analog) in INPUT mode (default is nothing)
+  for ( ul = 0 ; ul < NUM_DIGITAL_PINS ; ul++ )
+  {
+	  pinMode( ul, INPUT ) ;
+  }
+
+  // Initialize Analog Controller
   // Setting clock
   while(GCLK->STATUS.reg & GCLK_STATUS_SYNCBUSY);
 
@@ -87,7 +111,17 @@ void init( void )
                      ADC_AVGCTRL_ADJRES(0x0ul);   // Adjusting result by 0
 
   analogReference( AR_DEFAULT ) ; // Analog Reference is AREF pin (3.3v)
-  
+
+  // Initialize DAC
+  // Setting clock
+  while ( GCLK->STATUS.reg & GCLK_STATUS_SYNCBUSY );
+  GCLK->CLKCTRL.reg = GCLK_CLKCTRL_ID( GCM_DAC ) | // Generic Clock ADC
+                      GCLK_CLKCTRL_GEN_GCLK0     | // Generic Clock Generator 0 is source
+                      GCLK_CLKCTRL_CLKEN ;
+
+  while ( DAC->STATUS.bit.SYNCBUSY == 1 ); // Wait for synchronization of registers between the clock domains
+  DAC->CTRLB.reg = DAC_CTRLB_REFSEL_AVCC | // Using the 3.3V reference
+                   DAC_CTRLB_EOEN ;        // External Output Enable (Vout)
 }
 
 #ifdef __cplusplus

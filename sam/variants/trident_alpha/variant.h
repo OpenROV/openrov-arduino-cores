@@ -140,11 +140,18 @@ static const uint8_t SCK  = PIN_SPI_SCK ;
 // I2C Interfaces
 #define WIRE_INTERFACES_COUNT 2
 
-#define PIN_WIRE_SDA         (28u)
-#define PIN_WIRE_SCL         (29u)
+// SERCOM4
+#define PIN_WIRE_SDA         (29u)
+#define PIN_WIRE_SCL         (30u)
 
-#define PIN_WIRE1_SDA         (16u)
-#define PIN_WIRE1_SCL         (17u)
+// SERCOM2
+#define PIN_WIRE1_SDA         (17u)
+#define PIN_WIRE1_SCL         (18u)
+
+// Unused USB pins
+#define PIN_USB_DM 0
+#define PIN_USB_DP 0
+#define PIN_USB_HOST_ENABLE 0
 
 #ifdef __cplusplus
 }
@@ -195,11 +202,11 @@ extern Uart Serial1;
 #define SERIAL_PORT_HARDWARE1       Serial1
 #define SERIAL_PORT_HARDWARE_OPEN1  Serial1
 
-#define PERIPH_WIRE          		sercom4
-#define WIRE_IT_HANDLER      		SERCOM4_Handler
+#define PERIPH_WIRE          		    sercom4
+#define WIRE_IT_HANDLER      		    SERCOM4_Handler
 
-#define PERIPH_WIRE_1          		sercom2
-#define WIRE_IT_HANDLER_1      		SERCOM2_Handler
+#define PERIPH_WIRE1          		  sercom2
+#define WIRE1_IT_HANDLER      		  SERCOM2_Handler
 
 // TODO: What the hell is this
 #define PERIPH_SPI           		sercom5

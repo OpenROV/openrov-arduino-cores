@@ -50,7 +50,7 @@ void RTC_Handler      (void) __attribute__ ((weak, alias("Dummy_Handler")));
 void EIC_Handler      (void) __attribute__ ((weak, alias("Dummy_Handler")));
 void NVMCTRL_Handler  (void) __attribute__ ((weak, alias("Dummy_Handler")));
 void DMAC_Handler     (void) __attribute__ ((weak, alias("Dummy_Handler")));
-void USB_Handler      (void) __attribute__ ((weak, alias("Dummy_Handler")));
+void USB_Handler      (void) __attribute__ ((weak));
 void EVSYS_Handler    (void) __attribute__ ((weak, alias("Dummy_Handler")));
 void SERCOM0_Handler  (void) __attribute__ ((weak, alias("Dummy_Handler")));
 void SERCOM1_Handler  (void) __attribute__ ((weak, alias("Dummy_Handler")));
@@ -63,7 +63,7 @@ void TCC1_Handler     (void) __attribute__ ((weak, alias("Dummy_Handler")));
 void TCC2_Handler     (void) __attribute__ ((weak, alias("Dummy_Handler")));
 void TC3_Handler      (void) __attribute__ ((weak, alias("Dummy_Handler")));
 void TC4_Handler      (void) __attribute__ ((weak, alias("Dummy_Handler")));
-void TC5_Handler      (void) __attribute__ ((weak, alias("Dummy_Handler")));
+void TC5_Handler      (void) __attribute__ ((weak)); // Used in Tone.cpp
 void TC6_Handler      (void) __attribute__ ((weak, alias("Dummy_Handler")));
 void TC7_Handler      (void) __attribute__ ((weak, alias("Dummy_Handler")));
 void ADC_Handler      (void) __attribute__ ((weak, alias("Dummy_Handler")));
@@ -163,7 +163,8 @@ void Reset_Handler(void)
 
   main();
 
-  while (1);
+  while (1)
+    ;
 }
 
 /* Default Arduino systick handler */
@@ -173,6 +174,18 @@ void SysTick_Handler(void)
 {
   if (sysTickHook())
     return;
-    
   SysTick_DefaultHandler();
+}
+
+static void (*usb_isr)(void) = NULL;
+
+void USB_Handler(void)
+{
+  // if (usb_isr)
+  //   usb_isr();
+}
+
+void USB_SetHandler(void (*new_usb_isr)(void))
+{
+  // usb_isr = new_usb_isr;
 }

@@ -145,7 +145,7 @@ uint32_t analogRead( uint32_t ulPin )
     ulPin += A0 ;
   }
 
-  pinPeripheral(ulPin, g_APinDescription[ulPin].ulPinType);
+  pinPeripheral(ulPin, PIO_ANALOG);
 
   if (ulPin == A0) // Disable DAC, if analogWrite(A0,dval) used previously the DAC is enabled
   {
@@ -202,41 +202,52 @@ uint32_t analogRead( uint32_t ulPin )
 // to digital output.
 void analogWrite( uint32_t ulPin, uint32_t ulValue )
 {
-   // Basically, this function will attempt to do an analog write, a PWM set, or default to a digital high or low output
-   
   uint32_t attr = g_APinDescription[ulPin].ulPinAttribute ;
 
-  // Handle analog outputs
-  if( (attr & PIN_ATTR_ANALOG) == PIN_ATTR_ANALOG )
+  if ( (attr & PIN_ATTR_ANALOG) == PIN_ATTR_ANALOG )
   {
-    // We don't have any analog outputs, this is wrong
+    if ( ulPin != PIN_A0 )  // Only 1 DAC on A0 (PA02)
+    {
+      return;
+    }
+
+    ulValue = mapResolution(ulValue, _writeResolution, 10);
+
+    syncDAC();
+    DAC->DATA.reg = ulValue & 0x3FF;  // DAC on 10 bits.
+    syncDAC();
+    DAC->CTRLA.bit.ENABLE = 0x01;     // Enable DAC
+    syncDAC();
     return ;
   }
 
-  // Handle PWM outputs
-  if( ( attr & PIN_ATTR_PWM ) == PIN_ATTR_PWM )
+  if ( (attr & PIN_ATTR_PWM) == PIN_ATTR_PWM )
   {
-      
-    // Not sure exactly what this does yet
-    if ( (g_APinDescription[ulPin].ulPinType == PIO_TIMER) || g_APinDescription[ulPin].ulPinType == PIO_TIMER_ALT )
-    {
-      pinPeripheral( ulPin, g_APinDescription[ulPin].ulPinType ) ;
+    if (attr & PIN_ATTR_TIMER) {
+      #if !(ARDUINO_SAMD_VARIANT_COMPLIANCE >= 10603)
+      // Compatibility for cores based on SAMD core <=1.6.2
+      if (g_APinDescription[ulPin].ulPinType == PIO_TIMER_ALT) {
+        pinPeripheral(ulPin, PIO_TIMER_ALT);
+      } else
+      #endif
+      {
+        pinPeripheral(ulPin, PIO_TIMER);
+      }
+    } else {
+      // We suppose that attr has PIN_ATTR_TIMER_ALT bit set...
+      pinPeripheral(ulPin, PIO_TIMER_ALT);
     }
 
-    Tc*  TCx  = 0;
-    Tcc* TCCx = 0;
-    
-	// Get channel number for the Timer attached to the specified pin
+    Tc*  TCx  = 0 ;
+    Tcc* TCCx = 0 ;
     uint8_t Channelx = GetTCChannelNumber( g_APinDescription[ulPin].ulPWMChannel ) ;
-    
-    // Get the TC or TCC instance, depending on which type of timer it uses
-    if( GetTCNumber( g_APinDescription[ulPin].ulPWMChannel ) >= TCC_INST_NUM )
+    if ( GetTCNumber( g_APinDescription[ulPin].ulPWMChannel ) >= TCC_INST_NUM )
     {
-        TCx = (Tc*) GetTC( g_APinDescription[ulPin].ulPWMChannel ) ;
+      TCx = (Tc*) GetTC( g_APinDescription[ulPin].ulPWMChannel ) ;
     }
     else
     {
-        TCCx = (Tcc*) GetTC( g_APinDescription[ulPin].ulPWMChannel ) ;
+      TCCx = (Tcc*) GetTC( g_APinDescription[ulPin].ulPWMChannel ) ;
     }
 
     // Enable clocks according to TCCx instance to use
