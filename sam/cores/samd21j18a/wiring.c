@@ -82,10 +82,10 @@ void init( void )
   PM->APBCMASK.reg |= PM_APBCMASK_ADC | PM_APBCMASK_DAC ;
 
   // Setup all pins (digital and analog) in INPUT mode (default is nothing)
-  for ( ul = 0 ; ul < NUM_DIGITAL_PINS ; ul++ )
-  {
-	  pinMode( ul, INPUT ) ;
-  }
+  // for ( ul = 0 ; ul < NUM_DIGITAL_PINS ; ul++ )
+  // {
+	 // pinMode( ul, INPUT ) ;
+  // }
 
   // Initialize Analog Controller
   // Setting clock
@@ -122,6 +122,26 @@ void init( void )
   while ( DAC->STATUS.bit.SYNCBUSY == 1 ); // Wait for synchronization of registers between the clock domains
   DAC->CTRLB.reg = DAC_CTRLB_REFSEL_AVCC | // Using the 3.3V reference
                    DAC_CTRLB_EOEN ;        // External Output Enable (Vout)
+                   
+                   
+                   
+
+    // Setup digital IO pins in OUTPUT mode
+    pinMode( PIN_LED_0, OUTPUT );
+    pinMode( PIN_LED_1, OUTPUT );
+    pinMode( PIN_EN_PROGRAM, INPUT );
+    pinMode( PIN_EN_INTI2C, OUTPUT );
+    pinMode( PIN_EN_EXTI2C, OUTPUT );
+    pinMode( PIN_EN_ESC, OUTPUT );
+    pinMode( PIN_ESC_PRECHARGE, OUTPUT );
+    
+    pinMode( 23, OUTPUT );
+    pinMode( 24, OUTPUT );
+    pinMode( 25, OUTPUT );
+    pinMode( 26, OUTPUT );
+    pinMode( 37, OUTPUT );
+    pinMode( 38, OUTPUT );
+                   
 }
 
 #ifdef __cplusplus

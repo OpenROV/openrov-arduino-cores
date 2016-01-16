@@ -435,8 +435,9 @@ void SERCOM::initMasterWIRE( uint32_t baudrate )
   resetWIRE() ;
   
   // Set master mode and enable SCL Clock Stretch mode (stretch after ACK bit)
-  sercom->I2CM.CTRLA.reg =  SERCOM_I2CM_CTRLA_MODE( I2C_MASTER_OPERATION )/* |
-                            SERCOM_I2CM_CTRLA_SCLSM*/ ;
+  sercom->I2CM.CTRLA.reg =  SERCOM_I2CM_CTRLA_MODE( I2C_MASTER_OPERATION ) |
+                            SERCOM_I2CM_CTRLA_LOWTOUTEN |
+                            SERCOM_I2CM_CTRLA_INACTOUT( 0x3 );
   
   // Enable Smart mode and Quick Command
   //sercom->I2CM.CTRLB.reg =  SERCOM_I2CM_CTRLB_SMEN /*| SERCOM_I2CM_CTRLB_QCEN*/ ;

@@ -66,7 +66,7 @@ extern "C"
 
 // LEDs
 #define PIN_LED_0          	(31u)
-#define PIN_LED_1          	(29u)
+#define PIN_LED_1          	(28u)
 
 // Other GPIO
 #define PIN_EN_PROGRAM     	(32u)
@@ -74,6 +74,13 @@ extern "C"
 #define PIN_EN_EXTI2C  		(50u)
 #define PIN_EN_ESC        	(42u)
 #define PIN_ESC_PRECHARGE 	(49u)
+
+#define PIN_PWM_1   (35u)
+#define PIN_PWM_2 	(36u)
+#define PIN_PWM_3   (45u)
+#define PIN_PWM_4 	(46u)
+#define PIN_PWM_5   (19u)
+#define PIN_PWM_6 	(20u)
 
 // Analog Pins
 #define PIN_A0 				(3u)
