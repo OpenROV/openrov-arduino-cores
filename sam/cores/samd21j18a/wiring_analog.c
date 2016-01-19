@@ -233,8 +233,6 @@ void analogWrite( uint32_t ulPin, uint32_t ulValue )
     
     uint8_t Channelx = GetTCChannelNumber( g_APinDescription[ulPin].ulPWMChannel ) ;
     
-     Serial.println( Channelx );
-    
     if ( GetTCNumber( g_APinDescription[ulPin].ulPWMChannel ) >= TCC_INST_NUM )
     {
 
@@ -245,9 +243,6 @@ void analogWrite( uint32_t ulPin, uint32_t ulValue )
 
       TCCx = (Tcc*) GetTC( g_APinDescription[ulPin].ulPWMChannel ) ;
     }
-    
-
-    Serial.println( g_APinDescription[ulPin].ulPWMChannel  );
 
     // Enable clocks according to TCCx instance to use
     switch ( GetTCNumber( g_APinDescription[ulPin].ulPWMChannel ) )
