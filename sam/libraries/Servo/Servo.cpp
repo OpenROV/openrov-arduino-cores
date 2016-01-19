@@ -63,40 +63,53 @@ void HANDLER_FOR_TIMER2(void)
 
 void Servo_Handler(timer16_Sequence_t timer, Tc *tc, uint8_t channel, uint8_t intFlag)
 {
-  Serial.print( "a" );
-  
     if (currentServoIndex[timer] < 0) 
     {
         // Reset the TC's counter value to 0
         tc->COUNT16.COUNT.reg = (uint16_t) 0;
         
+        
         // Wait for sync
         WAIT_TC16_REGS_SYNC(tc)
+
     } 
     else 
     {
+
         if( SERVO_INDEX(timer, currentServoIndex[timer]) < ServoCount && SERVO(timer, currentServoIndex[timer]).Pin.isActive == true) 
         {
+
             digitalWrite(SERVO(timer, currentServoIndex[timer]).Pin.nbr, LOW);   // pulse this channel low if activated
         }
     }
+    
 
     // Select the next servo controlled by this timer
     currentServoIndex[timer]++;
 
+    
     if (SERVO_INDEX(timer, currentServoIndex[timer]) < ServoCount && currentServoIndex[timer] < SERVOS_PER_TIMER) 
     {
+
+         
         if (SERVO(timer, currentServoIndex[timer]).Pin.isActive == true) 
         {   // check if activated
+        
+
+             
             digitalWrite(SERVO(timer, currentServoIndex[timer]).Pin.nbr, HIGH);   // it's an active channel so pulse it high
         }
+
 
         // Get the counter value
         uint16_t tcCounterValue = tc->COUNT16.COUNT.reg;
         WAIT_TC16_REGS_SYNC(tc)
+        
+
 
         tc->COUNT16.CC[channel].reg = (uint16_t) (tcCounterValue + SERVO(timer, currentServoIndex[timer]).ticks);
         WAIT_TC16_REGS_SYNC(tc)
+
     }
     else 
     {
@@ -105,7 +118,11 @@ void Servo_Handler(timer16_Sequence_t timer, Tc *tc, uint8_t channel, uint8_t in
         // Get the counter value
         uint16_t tcCounterValue = tc->COUNT16.COUNT.reg;
         
+
+        
         WAIT_TC16_REGS_SYNC(tc)
+
+  
 
         if (tcCounterValue + 4UL < usToTicks(REFRESH_INTERVAL)) 
         {   
@@ -114,28 +131,47 @@ void Servo_Handler(timer16_Sequence_t timer, Tc *tc, uint8_t channel, uint8_t in
         }
         else 
         {
+
+             
             tc->COUNT16.CC[channel].reg = (uint16_t) (tcCounterValue + 4UL);   // at least REFRESH_INTERVAL has elapsed
         }
         
+
+        
         WAIT_TC16_REGS_SYNC(tc)
 
+
+
+         
         currentServoIndex[timer] = -1;   // this will get incremented at the end of the refresh period to start again at the first channel
     }
 
+
+
     // Clear the interrupt
     tc->COUNT16.INTFLAG.reg = intFlag;
+
 }
 
 static inline void resetTC (Tc* TCx)
 {
+
+  
     // Disable TCx
     TCx->COUNT16.CTRLA.reg &= ~TC_CTRLA_ENABLE;
     WAIT_TC16_REGS_SYNC(TCx)
 
+
+
     // Reset TCx
     TCx->COUNT16.CTRLA.reg = TC_CTRLA_SWRST;
     WAIT_TC16_REGS_SYNC(TCx)
+    
+
+    
     while (TCx->COUNT16.CTRLA.bit.SWRST);
+    
+
 }
 
 static void _initISR(Tc *tc, uint8_t channel, uint32_t id, IRQn_Type irqn, uint8_t gcmForTimer, uint8_t intEnableBit)
@@ -179,7 +215,6 @@ static void _initISR(Tc *tc, uint8_t channel, uint32_t id, IRQn_Type irqn, uint8
     tc->COUNT16.CTRLA.reg |= TC_CTRLA_ENABLE;
     WAIT_TC16_REGS_SYNC(tc)
     
-    Serial.println( "ISR initted" );
 }
 
 static void initISR(timer16_Sequence_t timer)
@@ -191,7 +226,6 @@ static void initISR(timer16_Sequence_t timer)
     }
     else
     {
-      Serial.println( "Weird" );
     }
 #endif
 #if defined (_useTimer2)
@@ -252,7 +286,6 @@ uint8_t Servo::attach(int pin, int min, int max)
     // initialize the timer if it has not already been initialized
     timer = SERVO_INDEX_TO_TIMER(servoIndex);
     if (isTimerActive(timer) == false) {
-      Serial.println( "Initting isr" );
       initISR(timer);
     }
     servos[this->servoIndex].Pin.isActive = true;  // this must be set after the check for isTimerActive

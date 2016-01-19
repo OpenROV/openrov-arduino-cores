@@ -68,7 +68,6 @@ void loop( void ) ;
 #ifdef __cplusplus
   #include "WCharacter.h"
   #include "WString.h"
-  #include "Tone.h"
   #include "WMath.h"
   #include "HardwareSerial.h"
   #include "pulse.h"
@@ -114,10 +113,5 @@ void loop( void ) ;
 
 #define bit(b) (1UL << (b))
 
-// USB Device
-#include "USB/USBDesc.h"
-#include "USB/USBCore.h"
-#include "USB/USBAPI.h"
-#include "USB/USB_host.h"
 
 #endif // Arduino_h

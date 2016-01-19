@@ -57,6 +57,7 @@ void calibrateADC()
  */
 void init( void )
 {
+  
   uint32_t ul ;
 
   // Set Systick to 1ms interval, common to all Cortex-M variants

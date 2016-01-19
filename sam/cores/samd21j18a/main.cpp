@@ -17,6 +17,7 @@
 */
 
 #define ARDUINO_MAIN
+
 #include "Arduino.h"
 
 // Weak empty variant initialization function.
@@ -34,10 +35,6 @@ int main( void )
   initVariant();
 
   delay(1);
-#if defined(USBCON)
-  USBDevice.init();
-  USBDevice.attach();
-#endif
 
   setup();
 

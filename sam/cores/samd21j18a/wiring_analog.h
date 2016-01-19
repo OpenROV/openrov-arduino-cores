@@ -19,6 +19,7 @@
 #pragma once
 
 #include <stdint.h>
+#include "Arduino.h"
 
 #ifdef __cplusplus
 extern "C" {
