@@ -125,16 +125,17 @@ uint8_t TwoWire::endTransmission(bool stopBit)
     
     return 2 ;  // Address error
   }
+  
 
   // Send all buffer
   while( txBuffer.available() )
   {
-    
     // Trying to send data
     if ( !sercom->sendDataMasterWIRE( txBuffer.read_char() ) )
     {
 
       sercom->prepareCommandBitsWire(WIRE_MASTER_ACT_STOP);
+      
       return 3 ;  // Nack or error
     }
   }
@@ -156,6 +157,7 @@ size_t TwoWire::write(uint8_t ucData)
 {
   if(sercom->isMasterWIRE())
   {
+
     // No writing, without begun transmission or a full buffer
     if ( !transmissionBegun || txBuffer.isFull() )
     {
@@ -163,7 +165,7 @@ size_t TwoWire::write(uint8_t ucData)
     }
 
     txBuffer.store_char( ucData ) ;
-
+     
     return 1 ;
   }
   else
