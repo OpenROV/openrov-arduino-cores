@@ -82,12 +82,6 @@ void init( void )
   // Clock ADC/DAC for Analog
   PM->APBCMASK.reg |= PM_APBCMASK_ADC | PM_APBCMASK_DAC ;
 
-  // Setup all pins (digital and analog) in INPUT mode (default is nothing)
-  // for ( ul = 0 ; ul < NUM_DIGITAL_PINS ; ul++ )
-  // {
-	 // pinMode( ul, INPUT ) ;
-  // }
-
   // Initialize Analog Controller
   // Setting clock
   while(GCLK->STATUS.reg & GCLK_STATUS_SYNCBUSY);
@@ -99,7 +93,8 @@ void init( void )
   while( ADC->STATUS.bit.SYNCBUSY == 1 );          // Wait for synchronization of registers between the clock domains
 
   ADC->CTRLB.reg = ADC_CTRLB_PRESCALER_DIV512 |    // Divide Clock by 512.
-                   ADC_CTRLB_RESSEL_10BIT;         // 10 bits resolution as default
+  					ADC_CTRLB_RESSEL_12BIT_Val;
+                   //ADC_CTRLB_RESSEL_10BIT;         // 10 bits resolution as default
 
   ADC->SAMPCTRL.reg = 0x3f;                        // Set max Sampling Time Length
 
@@ -123,25 +118,6 @@ void init( void )
   while ( DAC->STATUS.bit.SYNCBUSY == 1 ); // Wait for synchronization of registers between the clock domains
   DAC->CTRLB.reg = DAC_CTRLB_REFSEL_AVCC | // Using the 3.3V reference
                    DAC_CTRLB_EOEN ;        // External Output Enable (Vout)
-                   
-                   
-                   
-
-    // Setup digital IO pins in OUTPUT mode
-    pinMode( PIN_LED_0, OUTPUT );
-    pinMode( PIN_LED_1, OUTPUT );
-    pinMode( PIN_EN_PROGRAM, INPUT );
-    pinMode( PIN_EN_INTI2C, OUTPUT );
-    pinMode( PIN_EN_EXTI2C, OUTPUT );
-    pinMode( PIN_EN_ESC, OUTPUT );
-    pinMode( PIN_ESC_PRECHARGE, OUTPUT );
-    
-    pinMode( 23, OUTPUT );
-    pinMode( 24, OUTPUT );
-    pinMode( 25, OUTPUT );
-    pinMode( 26, OUTPUT );
-    pinMode( 37, OUTPUT );
-    pinMode( 38, OUTPUT );
                    
 }
 

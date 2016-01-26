@@ -69,23 +69,7 @@ int pinPeripheral( uint32_t ulPin, EPioType ulPeripheral )
     case PIO_EXTINT:
     case PIO_COM:
     case PIO_AC_CLK:
-#if 0
-      // Is the pio pin in the lower 16 ones?
-      // The WRCONFIG register allows update of only 16 pin max out of 32
-      if ( g_APinDescription[ulPin].ulPin < 16 )
-      {
-        PORT->Group[g_APinDescription[ulPin].ulPort].WRCONFIG.reg = PORT_WRCONFIG_WRPMUX | PORT_WRCONFIG_PMUXEN | PORT_WRCONFIG_PMUX( ulPeripheral ) |
-                                                                    PORT_WRCONFIG_WRPINCFG |
-                                                                    PORT_WRCONFIG_PINMASK( g_APinDescription[ulPin].ulPin ) ;
-      }
-      else
-      {
-        PORT->Group[g_APinDescription[ulPin].ulPort].WRCONFIG.reg = PORT_WRCONFIG_HWSEL |
-                                                                    PORT_WRCONFIG_WRPMUX | PORT_WRCONFIG_PMUXEN | PORT_WRCONFIG_PMUX( ulPeripheral ) |
-                                                                    PORT_WRCONFIG_WRPINCFG |
-                                                                    PORT_WRCONFIG_PINMASK( g_APinDescription[ulPin].ulPin - 16 ) ;
-      }
-#else
+
       if ( g_APinDescription[ulPin].ulPin & 1 ) // is pin odd?
       {
         uint32_t temp ;
@@ -105,7 +89,6 @@ int pinPeripheral( uint32_t ulPin, EPioType ulPeripheral )
         PORT->Group[g_APinDescription[ulPin].ulPort].PMUX[g_APinDescription[ulPin].ulPin >> 1].reg = temp|PORT_PMUX_PMUXE( ulPeripheral ) ;
         PORT->Group[g_APinDescription[ulPin].ulPort].PINCFG[g_APinDescription[ulPin].ulPin].reg |= PORT_PINCFG_PMUXEN ; // Enable port mux
       }
-#endif
     break ;
 
     case PIO_NOT_A_PIN:

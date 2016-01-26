@@ -140,20 +140,22 @@ uint32_t analogRead( uint32_t ulPin )
 {
   uint32_t valueRead = 0;
 
-  if ( ulPin < A0 )
-  {
-    ulPin += A0 ;
-  }
+	// TODO: What is this all about
+  //if ( ulPin < A0 )
+  //{
+  //  ulPin += A0 ;
+  //}
 
   pinPeripheral(ulPin, PIO_ANALOG);
 
-  if (ulPin == A0) // Disable DAC, if analogWrite(A0,dval) used previously the DAC is enabled
-  {
-    syncDAC();
-    DAC->CTRLA.bit.ENABLE = 0x00; // Disable DAC
-    //DAC->CTRLB.bit.EOEN = 0x00; // The DAC output is turned off.
-    syncDAC();
-  }
+	// TODO: We dont use the DAC, check to make sure its ok to keep this commented
+  //if (ulPin == A0) // Disable DAC, if analogWrite(A0,dval) used previously the DAC is enabled
+  //{
+  //  syncDAC();
+  //  DAC->CTRLA.bit.ENABLE = 0x00; // Disable DAC
+  //  //DAC->CTRLB.bit.EOEN = 0x00; // The DAC output is turned off.
+  //  syncDAC();
+  //}
 
   syncADC();
   ADC->INPUTCTRL.bit.MUXPOS = g_APinDescription[ulPin].ulADCChannelNumber; // Selection for the positive ADC input
