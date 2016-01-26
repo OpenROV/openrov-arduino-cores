@@ -68,49 +68,9 @@ extern "C"
 #define PIN_LED_0          	(31u)
 #define PIN_LED_1          	(28u)
 
-// Other GPIO
-#define PIN_EN_PROGRAM     	(32u)
-#define PIN_EN_INTI2C   	(51u)
-#define PIN_EN_EXTI2C  		(50u)
-#define PIN_EN_ESC        	(42u)
-#define PIN_ESC_PRECHARGE 	(49u)
-
-#define PIN_PWM_1   (35u)
-#define PIN_PWM_2 	(36u)
-#define PIN_PWM_3   (45u)
-#define PIN_PWM_4 	(46u)
-#define PIN_PWM_5   (19u)
-#define PIN_PWM_6 	(20u)
-
-// Analog Pins
-#define PIN_A0 				(3u)
-#define PIN_A1 				(4u)
-#define PIN_A2 				(11u)
-#define PIN_A3  			(12u)
-#define PIN_A8   			(61u)
-#define PIN_A9   			(62u)
-#define PIN_A10  			(63u)
-#define PIN_A11 			(64u)
-#define PIN_A12 			(5u)
-#define PIN_A13   			(6u)
-#define PIN_A14   			(9u)
-#define PIN_A15   			(10u)
-
 #define PIN_LED  			PIN_LED_0
 #define LED_BUILTIN 		PIN_LED_0
 
-static const uint8_t A0  = PIN_A0 ;
-static const uint8_t A1  = PIN_A1 ;
-static const uint8_t A2  = PIN_A2 ;
-static const uint8_t A3  = PIN_A3 ;
-static const uint8_t A8  = PIN_A8 ;
-static const uint8_t A9  = PIN_A9 ;
-static const uint8_t A10 = PIN_A10 ;
-static const uint8_t A11 = PIN_A11 ;
-static const uint8_t A12 = PIN_A12 ;
-static const uint8_t A13 = PIN_A13 ;
-static const uint8_t A14 = PIN_A14 ;
-static const uint8_t A15 = PIN_A15 ;
 
 #define ADC_RESOLUTION      12
 
