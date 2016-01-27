@@ -62,48 +62,34 @@ class TwoWire : public Stream
     void onService(void);
 
   private:
-    SERCOM * sercom;
-    uint8_t _uc_pinSDA;
-    uint8_t _uc_pinSCL;
-
-    bool transmissionBegun;
+    Sercom 			*m_pSercom;
+    SERCOM 			*sercomm;
+    uint8_t 		m_pinSDA;
+    uint8_t 		m_pinSCL;
+    
+    bool 			m_transmissionBegun;
 
     // RX Buffer
-    RingBuffer rxBuffer;
+    RingBuffer 		m_rxBuffer;
 
     //TX buffer
-    RingBuffer txBuffer;
-    uint8_t txAddress;
-
-
-    // Service buffer
-    //uint8_t srvBuffer[BUFFER_LENGTH];
-    //uint8_t srvBufferIndex;
-    //uint8_t srvBufferLength;
+    RingBuffer 		m_txBuffer;
+    uint8_t 		m_txAddress;
+    
+    char 			m_readBuffer[ BUFFER_LENGTH ];
 
     // Callback user functions
     void (*onRequestCallback)(void);
     void (*onReceiveCallback)(int);
 
-    // TWI state
-    //enum TwoWireStatus
-    //{
-    //  UNINITIALIZED,
-    //  MASTER_IDLE,
-    //  MASTER_SEND,
-    //  MASTER_RECV,
-    //  SLAVE_IDLE,
-    //  SLAVE_RECV,
-    //  SLAVE_SEND
-    //};
-    //TwoWireStatus status;
-
     // TWI clock frequency
     static const uint32_t TWI_CLOCK = 100000;
-
-    // Timeouts
-    //static const uint32_t RECV_TIMEOUT = 100000;
-    //static const uint32_t XMIT_TIMEOUT = 100000;
+    
+    
+    int _read( char *data, int length );
+    int _start( uint8_t address, uint8_t rw_flag );
+    int _stop();
+    int _write( char *data, int length);
 };
 
 #if WIRE_INTERFACES_COUNT > 0
