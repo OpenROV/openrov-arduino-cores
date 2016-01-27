@@ -48,7 +48,6 @@
 #define HANDLER_FOR_TIMER1        TC4_Handler
 #define GCM_FOR_TIMER_1           GCM_TC4_TC5
 #endif
-
 #if defined (_useTimer2)
 #define TC_FOR_TIMER2             TC4
 #define CHANNEL_FOR_TIMER2        1
@@ -60,16 +59,13 @@
 #define GCM_FOR_TIMER_2           GCM_TC4_TC5
 #endif
 
-typedef enum 
-{
+typedef enum {
 #if defined (_useTimer1)
     _timer1,
 #endif
-
 #if defined (_useTimer2)
     _timer2,
 #endif
-
     _Nbr_16timers } timer16_Sequence_t;
 
 #endif   // __SERVO_TIMERS_H__
