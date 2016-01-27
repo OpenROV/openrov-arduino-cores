@@ -35,7 +35,7 @@ class CBNO055Driver
 {
 public:
 
-	CBNO055Driver( int32_t sensorIdIn = -1, uint8_t addressIn = BNO055_ADDRESS_B );
+	CBNO055Driver( int32_t sensorIdIn = -1, uint8_t addressIn = BNO055_ADDRESS_A );
 
 	bool Initialize( TwoWire *wireInterfaceIn );
 	bool Reset();
