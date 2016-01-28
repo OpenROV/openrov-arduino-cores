@@ -205,7 +205,9 @@ int TwoWire::_read( char *data, int length )
 		{
 			if( millis() - timeout_counter > 10  )
 			{
-				Serial.println( "Read timeout" );
+				//Serial.println( "Read timeout" );
+				m_pSercom->I2CM.CTRLB.reg |= SERCOM_I2CM_CTRLB_ACKACT;
+				_stop();
 				return -1;
 			}
 		}
@@ -239,7 +241,9 @@ int TwoWire::_start( uint8_t address, uint8_t rw_flag )
 	{
 		if( millis() - timeout_counter > 10 )
 		{
-			Serial.println( "Timeout start" );
+			// Serial.println( "Timeout start" );
+			m_pSercom->I2CM.CTRLB.reg |= SERCOM_I2CM_CTRLB_ACKACT;
+			_stop();
 			return -1;
 		}
 	}
@@ -304,8 +308,10 @@ int TwoWire::_write( char *data, int length )
 		{
 			if( millis() - timeout_counter > 10 )
 			{
-				Serial.println( "Timeout write" );
+				// Serial.println( "Timeout write" );
 				// timeout
+				m_pSercom->I2CM.CTRLB.reg |= SERCOM_I2CM_CTRLB_ACKACT;
+				_stop();
 				return -1;
 			}
 		}
@@ -351,8 +357,8 @@ uint8_t TwoWire::requestFrom( uint8_t address, size_t quantity, bool stopBit )
 	}
 
 
-		// Stop transmission
-		_stop();
+	// Stop transmission
+	_stop();
 
 	return bytesRead;
 }

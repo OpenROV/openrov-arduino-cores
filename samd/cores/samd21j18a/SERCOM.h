@@ -1,19 +1,19 @@
 /*
-  Copyright (c) 2014 Arduino.  All right reserved.
+    Copyright (c) 2014 Arduino.  All right reserved.
 
-  This library is free software; you can redistribute it and/or
-  modify it under the terms of the GNU Lesser General Public
-  License as published by the Free Software Foundation; either
-  version 2.1 of the License, or (at your option) any later version.
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
 
-  This library is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-  See the GNU Lesser General Public License for more details.
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+    See the GNU Lesser General Public License for more details.
 
-  You should have received a copy of the GNU Lesser General Public
-  License along with this library; if not, write to the Free Software
-  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #ifndef _SERCOM_CLASS_
@@ -112,107 +112,126 @@ typedef enum
 	SPI_CHAR_SIZE_9_BITS
 } SercomSpiCharSize;
 
-typedef enum
+// TWI enums
+enum class ETWIBusState: uint8_t 
 {
-	WIRE_UNKNOWN_STATE = 0x0ul,
-	WIRE_IDLE_STATE,
-	WIRE_OWNER_STATE,
-	WIRE_BUSY_STATE
-} SercomWireBusState;
+	UNKNOWN = 0x0ul,
+	IDLE,
+	OWNER,
+	BUSY
+};
 
-typedef enum
+enum class ETWIReadWriteFlag: uint8_t 
 {
-	WIRE_WRITE_FLAG = 0x0ul,
-	WIRE_READ_FLAG
-} SercomWireReadWriteFlag;
+	WRITE = 0x0ul,
+	READ
+};
 
-typedef enum
+enum class ETWIMasterCommand: uint8_t 
 {
-	WIRE_MASTER_ACT_NO_ACTION = 0,
-	WIRE_MASTER_ACT_REPEAT_START,
-	WIRE_MASTER_ACT_READ,
-	WIRE_MASTER_ACT_STOP
-} SercomMasterCommandWire;
+	NO_ACTION = 0,
+	REPEAT_START,
+	READ,
+	STOP
+} ;
 
-typedef enum
+enum class ETWIMasterAckAction: uint8_t 
 {
-	WIRE_MASTER_ACK_ACTION = 0,
-	WIRE_MASTER_NACK_ACTION
-} SercomMasterAckActionWire;
+	ACK 	= ~SERCOM_I2CM_CTRLB_ACKACT,
+	NACK 	= SERCOM_I2CM_CTRLB_ACKACT
+};
 
 class SERCOM
 {
-	public:
-		SERCOM(Sercom* s) ;
+public:
+	SERCOM( Sercom *s ) ;
 
-		/* ========== UART ========== */
-		void initUART(SercomUartMode mode, SercomUartSampleRate sampleRate, uint32_t baudrate=0) ;
-		void initFrame(SercomUartCharSize charSize, SercomDataOrder dataOrder, SercomParityMode parityMode, SercomNumberStopBit nbStopBits) ;
-		void initPads(SercomUartTXPad txPad, SercomRXPad rxPad) ;
+	/* ========== UART ========== */
+	void initUART( SercomUartMode mode, SercomUartSampleRate sampleRate, uint32_t baudrate = 0 ) ;
+	void initFrame( SercomUartCharSize charSize, SercomDataOrder dataOrder, SercomParityMode parityMode, SercomNumberStopBit nbStopBits ) ;
+	void initPads( SercomUartTXPad txPad, SercomRXPad rxPad ) ;
 
-		void resetUART( void ) ;
-		void enableUART( void ) ;
-		void flushUART( void ) ;
-		void clearStatusUART( void ) ;
-		bool availableDataUART( void ) ;
-		bool isBufferOverflowErrorUART( void ) ;
-		bool isFrameErrorUART( void ) ;
-		bool isParityErrorUART( void ) ;
-		bool isDataRegisterEmptyUART( void ) ;
-		uint8_t readDataUART( void ) ;
-		int writeDataUART(uint8_t data) ;
-		bool isUARTError() ;
-		void acknowledgeUARTError() ;
+	void resetUART( void ) ;
+	void enableUART( void ) ;
+	void flushUART( void ) ;
+	void clearStatusUART( void ) ;
+	bool availableDataUART( void ) ;
+	bool isBufferOverflowErrorUART( void ) ;
+	bool isFrameErrorUART( void ) ;
+	bool isParityErrorUART( void ) ;
+	bool isDataRegisterEmptyUART( void ) ;
+	uint8_t readDataUART( void ) ;
+	int writeDataUART( uint8_t data ) ;
+	bool isUARTError() ;
+	void acknowledgeUARTError() ;
 
-		/* ========== SPI ========== */
-		void initSPI(SercomSpiTXPad mosi, SercomRXPad miso, SercomSpiCharSize charSize, SercomDataOrder dataOrder) ;
-		void initSPIClock(SercomSpiClockMode clockMode, uint32_t baudrate) ;
+	/* ========== SPI ========== */
+	void initSPI( SercomSpiTXPad mosi, SercomRXPad miso, SercomSpiCharSize charSize, SercomDataOrder dataOrder ) ;
+	void initSPIClock( SercomSpiClockMode clockMode, uint32_t baudrate ) ;
 
-		void resetSPI( void ) ;
-		void enableSPI( void ) ;
-		void disableSPI( void ) ;
-		void setDataOrderSPI(SercomDataOrder dataOrder) ;
-		SercomDataOrder getDataOrderSPI( void ) ;
-		void setBaudrateSPI(uint8_t divider) ;
-		void setClockModeSPI(SercomSpiClockMode clockMode) ;
-		void writeDataSPI(uint8_t data) ;
-		uint16_t readDataSPI( void ) ;
-		bool isBufferOverflowErrorSPI( void ) ;
-		bool isDataRegisterEmptySPI( void ) ;
-		bool isTransmitCompleteSPI( void ) ;
-		bool isReceiveCompleteSPI( void ) ;
+	void resetSPI( void ) ;
+	void enableSPI( void ) ;
+	void disableSPI( void ) ;
+	void setDataOrderSPI( SercomDataOrder dataOrder ) ;
+	SercomDataOrder getDataOrderSPI( void ) ;
+	void setBaudrateSPI( uint8_t divider ) ;
+	void setClockModeSPI( SercomSpiClockMode clockMode ) ;
+	void writeDataSPI( uint8_t data ) ;
+	uint16_t readDataSPI( void ) ;
+	bool isBufferOverflowErrorSPI( void ) ;
+	bool isDataRegisterEmptySPI( void ) ;
+	bool isTransmitCompleteSPI( void ) ;
+	bool isReceiveCompleteSPI( void ) ;
 
-		/* ========== WIRE ========== */
-		void initSlaveWIRE(uint8_t address) ;
-		void initMasterWIRE(uint32_t baudrate) ;
+	/* ========== WIRE ========== */
+	void InitMasterMode_TWI( uint32_t baudRateIn );
+	void InitSlaveMode_TWI( uint8_t addressIn );
+	void Reset_TWI();
+	void Enable_TWI();
+	void Disable_TWI();
+	void PrepareNack_TWI();
+	void PrepareAck_TWI();
+	void PrepareCommand_TWI( ETWIMasterCommand commandIn );
+	void SetTimeout_TWI( uint32_t timeoutMsIn );
+	void SyncReset_TWI();
+	void SyncEnable_TWI();
+	void SyncSysOp_TWI();
+	void SyncBusy_TWI();
+	void ClearInterruptMB_TWI();
+	void ClearInterruptSB_TWI();
+	void MoveToIdleBusState_TWI();
 
-		void resetWIRE( void ) ;
-		void enableWIRE( void ) ;
-    void disableWIRE( void );
-    void prepareNackBitWIRE( void ) ;
-    void prepareAckBitWIRE( void ) ;
-    void prepareCommandBitsWire(uint8_t cmd);
-		bool startTransmissionWIRE(uint8_t address, SercomWireReadWriteFlag flag) ;
-		bool sendDataMasterWIRE(uint8_t data) ;
-		bool sendDataSlaveWIRE(uint8_t data) ;
-		bool isMasterWIRE( void ) ;
-		bool isSlaveWIRE( void ) ;
-		bool isBusIdleWIRE( void ) ;
-		bool isBusOwnerWIRE( void ) ;
-		bool isDataReadyWIRE( void ) ;
-		bool isStopDetectedWIRE( void ) ;
-		bool isRestartDetectedWIRE( void ) ;
-		bool isAddressMatch( void ) ;
-		bool isMasterReadOperationWIRE( void ) ;
-    bool isRXNackReceivedWIRE( void ) ;
-		int availableWIRE( void ) ;
-		uint8_t readDataWIRE( void ) ;
-		Sercom* sercom;
-	private:
-		//Sercom* sercom;
-		uint8_t calculateBaudrateSynchronous(uint32_t baudrate) ;
-		uint32_t division(uint32_t dividend, uint32_t divisor) ;
-		void initClockNVIC( void ) ;
+	int StartTransmission_TWI( uint8_t addressIn, ETWIReadWriteFlag flagIn );
+	int ReadAsMaster_TWI( char *dataOut, int lengthIn );
+	int WriteAsMaster_TWI( char *dataIn, int lengthIn );
+	
+	int SendDataAsSlave_TWI( uint8_t dataIn );
+
+	bool IsRXNackReceived_TWI();
+	bool IsArbitrationLost_TWI();
+	bool CheckInterruptMB_TWI();
+	bool CheckInterruptSB_TWI();
+	bool HasBusOwnership_TWI();
+	bool IsMasterMode_TWI();
+	bool IsSlaveMode_TWI();
+
+	bool IsDataReady_TWI();
+	bool IsStopDetected_TWI();
+	bool IsRestartDetected_TWI();
+	bool IsAddressMatch_TWI();
+	bool IsMasterReadOperation_TWI();
+	bool IsDataAvailable_TWI();
+
+private:
+	// Shared private members
+	Sercom* sercom;
+	
+	uint32_t m_timeout_ms = 10;
+
+	// Methods
+	uint8_t CalculateBaudrateSynchronous( uint32_t baudrateIn );
+	
+	void InitClockNVIC();
 };
 
 #endif
