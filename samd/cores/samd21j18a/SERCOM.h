@@ -37,12 +37,6 @@ typedef enum
 
 typedef enum
 {
-	I2C_SLAVE_OPERATION = 0x4u,
-	I2C_MASTER_OPERATION = 0x5u
-} SercomI2CMode;
-
-typedef enum
-{
 	SERCOM_EVEN_PARITY = 0,
 	SERCOM_ODD_PARITY,
 	SERCOM_NO_PARITY
@@ -113,6 +107,12 @@ typedef enum
 } SercomSpiCharSize;
 
 // TWI enums
+enum class ETWIMode : uint8_t 
+{
+	SLAVE = 0x4u,
+	MASTER = 0x5u
+};
+
 enum class ETWIBusState: uint8_t 
 {
 	UNKNOWN = 0x0ul,
@@ -191,7 +191,7 @@ public:
 	void Disable_TWI();
 	void PrepareNack_TWI();
 	void PrepareAck_TWI();
-	void PrepareCommand_TWI( ETWIMasterCommand commandIn );
+	void SendCommand_TWI( ETWIMasterCommand commandIn );
 	void SetTimeout_TWI( uint32_t timeoutMsIn );
 	void SyncReset_TWI();
 	void SyncEnable_TWI();
@@ -227,6 +227,7 @@ private:
 	Sercom* sercom;
 	
 	uint32_t m_timeout_ms = 10;
+	uint32_t startTime = 0;
 
 	// Methods
 	uint8_t CalculateBaudrateSynchronous( uint32_t baudrateIn );
