@@ -106,40 +106,44 @@ typedef enum
 	SPI_CHAR_SIZE_9_BITS
 } SercomSpiCharSize;
 
+
 // TWI enums
-enum class ETWIMode : uint8_t 
+namespace i2c
 {
-	SLAVE = 0x4u,
-	MASTER = 0x5u
-};
-
-enum class ETWIBusState: uint8_t 
-{
-	UNKNOWN = 0x0ul,
-	IDLE,
-	OWNER,
-	BUSY
-};
-
-enum class ETWIReadWriteFlag: uint8_t 
-{
-	WRITE = 0x0ul,
-	READ
-};
-
-enum class ETWIMasterCommand: uint8_t 
-{
-	NO_ACTION = 0,
-	REPEAT_START,
-	READ,
-	STOP
-} ;
-
-enum class ETWIMasterAckAction: uint8_t 
-{
-	ACK 	= ~SERCOM_I2CM_CTRLB_ACKACT,
-	NACK 	= SERCOM_I2CM_CTRLB_ACKACT
-};
+	enum ETWIMode : uint8_t 
+	{
+		SLAVE = 0x4u,
+		MASTER = 0x5u
+	};
+	
+	enum ETWIBusState: uint8_t 
+	{
+		UNKNOWN = 0x0ul,
+		IDLE,
+		OWNER,
+		BUSY
+	};
+	
+	enum ETWIReadWriteFlag: uint8_t 
+	{
+		WRITE = 0x0ul,
+		READ
+	};
+	
+	enum ETWIMasterCommand: uint8_t 
+	{
+		NO_ACTION = 0,
+		REPEAT_START,
+		BYTE_READ,
+		STOP
+	} ;
+	
+	enum ETWIMasterAckAction: uint8_t
+	{
+		ACK 	= 0,
+		NACK 	= 1
+	};
+}
 
 class SERCOM
 {
@@ -191,7 +195,7 @@ public:
 	void Disable_TWI();
 	void PrepareNack_TWI();
 	void PrepareAck_TWI();
-	void SendCommand_TWI( ETWIMasterCommand commandIn );
+	void SendCommand_TWI( i2c::ETWIMasterCommand commandIn );
 	void SetTimeout_TWI( uint32_t timeoutMsIn );
 	void SyncReset_TWI();
 	void SyncEnable_TWI();
@@ -201,17 +205,20 @@ public:
 	void ClearInterruptSB_TWI();
 	void MoveToIdleBusState_TWI();
 
-	int StartTransmission_TWI( uint8_t addressIn, ETWIReadWriteFlag flagIn );
-	int ReadAsMaster_TWI( char *dataOut, int lengthIn );
-	int WriteAsMaster_TWI( char *dataIn, int lengthIn );
+	int StartTransmission_TWI( uint8_t addressIn, i2c::ETWIReadWriteFlag flagIn );
+	int ReadAsMaster_TWI( uint8_t *dataOut, int lengthIn, bool sendRepeatedStart = false );
+	int WriteAsMaster_TWI( uint8_t *dataIn, int lengthIn, bool sendRepeatedStart = false );
 	
-	int SendDataAsSlave_TWI( uint8_t dataIn );
+	int WriteAsSlave_TWI( uint8_t dataIn );
 
 	bool IsRXNackReceived_TWI();
 	bool IsArbitrationLost_TWI();
+	bool IsBusError_TWI();
 	bool CheckInterruptMB_TWI();
 	bool CheckInterruptSB_TWI();
 	bool HasBusOwnership_TWI();
+	bool IsBusStateIdle_TWI();
+	bool IsMasterExtendedSCLTimeout_TWI();
 	bool IsMasterMode_TWI();
 	bool IsSlaveMode_TWI();
 
@@ -227,7 +234,7 @@ private:
 	Sercom* sercom;
 	
 	uint32_t m_timeout_ms = 10;
-	uint32_t startTime = 0;
+	uint32_t m_startTime = 0;
 
 	// Methods
 	uint8_t CalculateBaudrateSynchronous( uint32_t baudrateIn );

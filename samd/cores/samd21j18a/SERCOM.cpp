@@ -17,11 +17,14 @@
 */
 
 #include "SERCOM.h"
+#include "Arduino.h"
 #include "variant.h"
 
 #define STANDARD_MODE_FAST_MODE 0x0
 #define FAST_MODE_PLUS 0X01
 #define HIGHSPEED_MODE 0X02
+
+using namespace i2c;
 
 SERCOM::SERCOM( Sercom *s )
 {
@@ -34,7 +37,7 @@ SERCOM::SERCOM( Sercom *s )
 */
 void SERCOM::initUART( SercomUartMode mode, SercomUartSampleRate sampleRate, uint32_t baudrate )
 {
-	initClockNVIC();
+	InitClockNVIC();
 	resetUART();
 
 	//Setting the CTRLA register
@@ -183,7 +186,7 @@ int SERCOM::writeDataUART( uint8_t data )
 void SERCOM::initSPI( SercomSpiTXPad mosi, SercomRXPad miso, SercomSpiCharSize charSize, SercomDataOrder dataOrder )
 {
 	resetSPI();
-	initClockNVIC();
+	InitClockNVIC();
 
 	//Setting the CTRLA register
 	sercom->SPI.CTRLA.reg =	SERCOM_SPI_CTRLA_MODE_SPI_MASTER |
@@ -226,7 +229,7 @@ void SERCOM::initSPIClock( SercomSpiClockMode clockMode, uint32_t baudrate )
 	                            ( cpol << SERCOM_SPI_CTRLA_CPOL_Pos );
 
 	//Synchronous arithmetic
-	sercom->SPI.BAUD.reg = calculateBaudrateSynchronous( baudrate );
+	sercom->SPI.BAUD.reg = CalculateBaudrateSynchronous( baudrate );
 }
 
 void SERCOM::resetSPI()
@@ -286,7 +289,7 @@ void SERCOM::setBaudrateSPI( uint8_t divider )
 	//Register enable-protected
 	disableSPI();
 
-	sercom->SPI.BAUD.reg = calculateBaudrateSynchronous( SERCOM_FREQ_REF / divider );
+	sercom->SPI.BAUD.reg = CalculateBaudrateSynchronous( SERCOM_FREQ_REF / divider );
 
 	enableSPI();
 }
@@ -390,11 +393,12 @@ void SERCOM::InitMasterMode_TWI( uint32_t baudRateIn )
 
 	// Set sercom peripheral to operate in I2C Master Mode
 	sercom->I2CM.CTRLA.reg = SERCOM_I2CM_CTRLA_MODE_I2C_MASTER;
-	// | SERCOM_I2CM_CTRLA_LOWTOUTEN
-	// | SERCOM_I2CM_CTRLA_INACTOUT( 0x3 );
+		// | SERCOM_I2CM_CTRLA_LOWTOUTEN
+		// | SERCOM_I2CM_CTRLA_INACTOUT( 0x3 )
+		// | SERCOM_I2CM_CTRLA_MEXTTOEN;
 
 	// Enable Smart Mode (The currently set CTRLB.ACKACT is sent automatically when DATA.DATA is read)
-	sercom->I2CM.CTRLB.reg = SERCOM_I2CM_CTRLB_SMEN;
+	//sercom->I2CM.CTRLB.reg = SERCOM_I2CM_CTRLB_SMEN;
 
 	// Calculate baud setting from requested rate
 	int32_t tempBaud = ( SystemCoreClock / ( 2 * baudRateIn ) - 1 );
@@ -418,7 +422,7 @@ void SERCOM::InitMasterMode_TWI( uint32_t baudRateIn )
 
 void SERCOM::InitSlaveMode_TWI( uint8_t addressIn )
 {
-	// TODO
+	// TODO: Not yet implemented
 }
 
 void SERCOM::Reset_TWI()
@@ -482,13 +486,13 @@ void SERCOM::SyncBusy_TWI()
 void SERCOM::MoveToIdleBusState_TWI()
 {
 	// Get operation start time for timeout
-	startTime = millis();
+	m_startTime = millis();
 
 	// Wait for bus to move from Unknown state to Idle
 	while( !( sercom->I2CM.STATUS.reg & SERCOM_I2CM_STATUS_BUSSTATE( ETWIBusState::IDLE ) ) )
 	{
 		// Force bus state change after 10ms timeout
-		if( millis() - startTime > 10 )
+		if( millis() - m_startTime >= m_timeout_ms )
 		{
 			// Force bus state to idle
 			sercom->I2CM.STATUS.reg |= SERCOM_I2CM_STATUS_BUSSTATE( ETWIBusState::IDLE );
@@ -506,13 +510,13 @@ void SERCOM::SetTimeout_TWI( uint32_t timeoutMsIn )
 void SERCOM::PrepareNack_TWI()
 {
 	// Set ACKACT to Nack
-	sercom->I2CM.CTRLB.reg |= ETWIMasterAckAction::NACK;
+	sercom->I2CM.CTRLB.bit.ACKACT = ETWIMasterAckAction::NACK;
 }
 
 void SERCOM::PrepareAck_TWI()
 {
 	// Set ACKACT to Ack
-	sercom->I2CM.CTRLB.reg |= ETWIMasterAckAction::ACK;
+	sercom->I2CM.CTRLB.bit.ACKACT = ETWIMasterAckAction::ACK;
 }
 
 void SERCOM::SendCommand_TWI( ETWIMasterCommand commandIn )
@@ -545,45 +549,89 @@ void SERCOM::ClearInterruptSB_TWI()
 
 int SERCOM::StartTransmission_TWI( uint8_t addressIn, ETWIReadWriteFlag flagIn )
 {
-	// Sync
-	// TODO: Not sure if this is necessary.
-	SyncBusy_TWI();
-	
-	// Set action to ACK.
-	PrepareAck_TWI();
-
 	// Send Start | Address | Write/Read
 	sercom->I2CM.ADDR.reg = ( addressIn << 1 ) | flagIn;
 
-	startTime = millis();
+	m_startTime = millis();
 
-	// Wait for response on bus - Either An error condition or a slave 
-	while( !CheckInterruptMB_TWI() && !CheckInterruptSB_TWI() */ )
+	if( flagIn == ETWIReadWriteFlag::WRITE )
 	{
-		// Handle timeout
-		if( millis() - startTime > m_timeout_ms )
+		// Wait for response on bus - Either An error condition or a slave 
+		while( !CheckInterruptMB_TWI() )
 		{
-			// If we time out, we need to change the ACKACT to a NACK
+			// Handle loss of arbitration
+			if( IsArbitrationLost_TWI() )
+			{
+				PrepareNack_TWI();
+				SendCommand_TWI( ETWIMasterCommand::STOP );
+				return -2;
+			}
+			
+			// Handle bus error
+			if( IsBusError_TWI() )
+			{
+				PrepareNack_TWI();
+				SendCommand_TWI( ETWIMasterCommand::STOP );
+				return -3;
+			}
+		
+			// Handle timeout
+			if( millis() - m_startTime >= m_timeout_ms )
+			{
+				// If we time out, we need to change the ACKACT to a NACK
+				PrepareNack_TWI();
+				SendCommand_TWI( ETWIMasterCommand::STOP );
+				return -1;
+			}
+		}
+		
+
+		
+		// Check for NACK
+		if( IsRXNackReceived_TWI() )
+		{
+			// Slave busy. Issue stop command.
+			PrepareNack_TWI();
 			SendCommand_TWI( ETWIMasterCommand::STOP );
-			return -1;
+			return -3;
 		}
 	}
-
-	/* Check for address response error unless previous error is detected. */
-	/*  Check for error and ignore bus-error; workaround for BUSSTATE stuck in BUSY */
-	if( m_pSercom->I2CM.INTFLAG.reg & SERCOM_I2CM_INTFLAG_MB )
+	else
 	{
-		/* Check arbitration. */
-		if( m_pSercom->I2CM.STATUS.reg & SERCOM_I2CM_STATUS_ARBLOST )
+		// Wait for response on bus - Either An error condition or a slave 
+		while( !CheckInterruptMB_TWI() && !CheckInterruptSB_TWI() )
 		{
-			SendCommand_TWI( ETWIMasterCommand::STOP );
-			return -2;
+			// Handle loss of arbitration
+			if( IsArbitrationLost_TWI() )
+			{
+				PrepareNack_TWI();
+				SendCommand_TWI( ETWIMasterCommand::STOP );
+				return -2;
+			}
+			
+			// Handle bus error
+			if( IsBusError_TWI() )
+			{
+				PrepareNack_TWI();
+				SendCommand_TWI( ETWIMasterCommand::STOP );
+				return -3;
+			}
+			
+			// Handle timeout
+			if( millis() - m_startTime >= m_timeout_ms )
+			{
+				// If we time out, we need to change the ACKACT to a NACK
+				PrepareNack_TWI();
+				SendCommand_TWI( ETWIMasterCommand::STOP );
+				return -1;
+			}
 		}
 		
 		// Check for NACK
 		if( IsRXNackReceived_TWI() )
 		{
-			/* Slave busy. Issue ack and stop command. */
+			// Slave busy. Issue stop command.
+			PrepareNack_TWI();
 			SendCommand_TWI( ETWIMasterCommand::STOP );
 			return -3;
 		}
@@ -593,83 +641,221 @@ int SERCOM::StartTransmission_TWI( uint8_t addressIn, ETWIReadWriteFlag flagIn )
 	return 0;
 }
 
-int SERCOM::ReadAsMaster_TWI( char *dataOut, int lengthIn )
+int SERCOM::ReadAsMaster_TWI( uint8_t *dataOut, int lengthIn, bool sendRepeatedStart )
 {
+	uint8_t bytesRead = 0;
 
+	// Read data into buffer
+	while( bytesRead != lengthIn )
+	{
+		m_startTime = millis();
+			
+		// Wait for the next byte to come in. We can either fail here via the slave not writing data or loss of arbitration. We force a NACK/STOP in either case to recover.
+		while( !CheckInterruptMB_TWI() && !CheckInterruptSB_TWI() )
+		{
+			// Handle loss of arbitration
+			if( IsArbitrationLost_TWI() )
+			{
+				PrepareNack_TWI();
+				SendCommand_TWI( ETWIMasterCommand::STOP );
+				return -2;
+			}
+			
+			// Handle bus error
+			if( IsBusError_TWI() )
+			{
+				PrepareNack_TWI();
+				SendCommand_TWI( ETWIMasterCommand::STOP );
+				return -3;
+			}
+			
+			// Handle timeout
+			if( millis() - m_startTime >= m_timeout_ms )
+			{
+				PrepareNack_TWI();
+				SendCommand_TWI( ETWIMasterCommand::STOP );
+				return -1;
+			}
+		}
+		
+		// Copy data from DATA register to user buffer (clears SB intflag )
+		dataOut[ bytesRead ] = sercom->I2CM.DATA.bit.DATA;
+		bytesRead++;
+		
+		if( bytesRead == lengthIn )
+		{
+			break;
+		}
+		 
+		// Issue read command to get the next byte
+		PrepareAck_TWI();
+		SendCommand_TWI( ETWIMasterCommand::BYTE_READ );
+	}
+
+	// Send NACK/STOP to signal that master is finished reading
+	PrepareNack_TWI();
+	
+	if( sendRepeatedStart )
+	{
+		SendCommand_TWI( ETWIMasterCommand::REPEAT_START );
+	}
+	else
+	{
+		SendCommand_TWI( ETWIMasterCommand::STOP );
+	}
+	
+	return bytesRead;
 }
 
-int SERCOM::WriteAsMaster_TWI( char *dataIn, int lengthIn )
+int SERCOM::WriteAsMaster_TWI( uint8_t *dataIn, int lengthIn, bool sendRepeatedStart )
 {
+	uint16_t bytesRemaining	= lengthIn;
+	uint16_t bufferIndex 	= 0;
 
+	// Write bytes
+	while( bytesRemaining-- )
+	{
+		// Write byte of data to the DATA register
+		sercom->I2CM.DATA.bit.DATA = dataIn[ bufferIndex++ ];
+
+		m_startTime = millis();
+
+		// Wait for ACK/NACK
+		while( !(sercom->I2CM.INTFLAG.reg & SERCOM_I2CM_INTFLAG_MB) )
+		{
+			// Handle loss of arbitration
+			if( IsArbitrationLost_TWI() )
+			{
+				PrepareNack_TWI();
+				SendCommand_TWI( ETWIMasterCommand::STOP );
+				return -2;
+			}
+			
+			// Handle bus error
+			if( IsBusError_TWI() )
+			{
+				PrepareNack_TWI();
+				SendCommand_TWI( ETWIMasterCommand::STOP );
+				return -3;
+			}
+			
+			// Handle timeout
+			if( millis() - m_startTime >= m_timeout_ms )
+			{
+				PrepareNack_TWI();
+				SendCommand_TWI( ETWIMasterCommand::STOP );
+				return -1;
+			}
+		}
+
+		// Check for NACK from slave
+		if( sercom->I2CM.STATUS.reg & SERCOM_I2CM_STATUS_RXNACK )
+		{
+			PrepareNack_TWI();
+			SendCommand_TWI( ETWIMasterCommand::STOP );
+			return -4;
+		}
+	}
+	
+	if( sendRepeatedStart )
+	{
+		SendCommand_TWI( ETWIMasterCommand::REPEAT_START );
+	}
+	else
+	{
+		SendCommand_TWI( ETWIMasterCommand::STOP );
+	}
+
+
+	return 0;
+}
+
+int SERCOM::WriteAsSlave_TWI( uint8_t dataIn )
+{
+	// TODO: Not yet implemented
+	return -1;
 }
 
 
-
-
-bool IsRXNackReceived_TWI()
+bool SERCOM::IsRXNackReceived_TWI()
 {
 	return ( sercom->I2CM.STATUS.reg & SERCOM_I2CM_STATUS_RXNACK );
 }
 
-bool IsArbitrationLost_TWI()
+bool SERCOM::IsArbitrationLost_TWI()
 {
 	return ( sercom->I2CM.STATUS.reg & SERCOM_I2CM_STATUS_ARBLOST );
 }
 
-bool CheckInterruptMB_TWI()
+bool SERCOM::IsBusError_TWI()
+{
+	return ( sercom->I2CM.STATUS.bit.BUSERR );
+}
+
+bool SERCOM::CheckInterruptMB_TWI()
 {
 	return ( sercom->I2CM.INTFLAG.reg & SERCOM_I2CM_INTFLAG_MB );
 }
 
-bool CheckInterruptSB_TWI()
+bool SERCOM::CheckInterruptSB_TWI()
 {
 	return ( sercom->I2CM.INTFLAG.reg & SERCOM_I2CM_INTFLAG_SB ); 
 }
 
-bool HasBusOwnership_TWI()
+bool SERCOM::IsBusStateIdle_TWI()
+{
+	return ( sercom->I2CM.STATUS.reg & SERCOM_I2CM_STATUS_BUSSTATE( ETWIBusState::IDLE ) );
+}
+
+bool SERCOM::IsMasterExtendedSCLTimeout_TWI()
+{
+	return ( sercom->I2CM.STATUS.reg & SERCOM_I2CM_STATUS_MEXTTOUT ); 
+}
+
+bool SERCOM::HasBusOwnership_TWI()
 {
 	return ( sercom->I2CM.STATUS.reg & SERCOM_I2CM_STATUS_BUSSTATE( ETWIBusState::OWNER ) );
 }
 
-bool IsMasterMode_TWI()
+bool SERCOM::IsMasterMode_TWI()
 {
 	return ( sercom->I2CS.CTRLA.bit.MODE == ETWIMode::MASTER );
 }
 
-bool IsSlaveMode_TWI()
+bool SERCOM::IsSlaveMode_TWI()
 {
 	return ( sercom->I2CS.CTRLA.bit.MODE == ETWIMode::SLAVE );
 }
 
 // These functions used in slave mode, primarily
-bool IsDataReady_TWI()
+bool SERCOM::IsDataReady_TWI()
 {
 	return ( sercom->I2CS.INTFLAG.bit.DRDY );
 }
 
-bool IsStopDetected_TWI()
+bool SERCOM::IsStopDetected_TWI()
 {
 	 return ( sercom->I2CS.INTFLAG.bit.PREC );
 }
 
-bool IsRestartDetected_TWI()
+bool SERCOM::IsRestartDetected_TWI()
 {
 	return ( sercom->I2CS.STATUS.bit.SR );
 }
 
-bool IsAddressMatch_TWI()
+bool SERCOM::IsAddressMatch_TWI()
 {
 	return ( sercom->I2CS.INTFLAG.bit.AMATCH );
 }
 
-bool IsMasterReadOperation_TWI()
+bool SERCOM::IsMasterReadOperation_TWI()
 {
 	return ( sercom->I2CS.STATUS.bit.DIR );
 }
 
-bool IsDataAvailable_TWI()
+bool SERCOM::IsDataAvailable_TWI()
 {
-	if( isMasterWIRE() )
+	if( IsMasterMode_TWI() )
 	{
 		return ( sercom->I2CM.INTFLAG.bit.SB );
 	}

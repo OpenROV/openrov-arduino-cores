@@ -1,20 +1,20 @@
 /***************************************************************************
-  This is a library for the BNO055 orientation sensor
+    This is a library for the BNO055 orientation sensor
 
-  Designed specifically to work with the Adafruit BNO055 Breakout.
+    Designed specifically to work with the Adafruit BNO055 Breakout.
 
-  Pick one up today in the adafruit shop!
-  ------> http://www.adafruit.com/products
+    Pick one up today in the adafruit shop!
+    ------> http://www.adafruit.com/products
 
-  These sensors use I2C to communicate, 2 pins are required to interface.
+    These sensors use I2C to communicate, 2 pins are required to interface.
 
-  Adafruit invests time and resources providing this open source code,
-  please support Adafruit andopen-source hardware by purchasing products
-  from Adafruit!
+    Adafruit invests time and resources providing this open source code,
+    please support Adafruit andopen-source hardware by purchasing products
+    from Adafruit!
 
-  Written by KTOWN for Adafruit Industries.
+    Written by KTOWN for Adafruit Industries.
 
-  MIT license, all text above must be included in any redistribution
+    MIT license, all text above must be included in any redistribution
  ***************************************************************************/
 
 // Includes
@@ -42,13 +42,13 @@ bool CBNO055Driver::Initialize( TwoWire *wireInterfaceIn )
 		Serial.println( "Null:thing;" );
 		return false;
 	}
-	
+
 	m_pWire = wireInterfaceIn;
-	
+
 	m_isInitialized = false;
 
 	delay( 500 );
-	
+
 	Serial.println( "bosch:a;" );
 
 	// Idempotent
@@ -59,7 +59,7 @@ bool CBNO055Driver::Initialize( TwoWire *wireInterfaceIn )
 	}
 
 	delay( 10 );
-	
+
 	Serial.println( "bosch:b;" );
 
 	// Non-idempotent - Uninitializes and puts device in unconfigured default state
@@ -68,7 +68,7 @@ bool CBNO055Driver::Initialize( TwoWire *wireInterfaceIn )
 	{
 		return false;
 	}
-	
+
 	Serial.println( "bosch:c;" );
 
 	unsigned long start = millis();
@@ -96,7 +96,7 @@ bool CBNO055Driver::Initialize( TwoWire *wireInterfaceIn )
 
 		}
 	}
-	
+
 	Serial.println( "bosch:e;" );
 
 	// Idempotent
@@ -105,7 +105,7 @@ bool CBNO055Driver::Initialize( TwoWire *wireInterfaceIn )
 	{
 		return false;
 	}
-	
+
 	Serial.println( "bosch:f;" );
 
 	delay( 1000 );
@@ -143,7 +143,7 @@ bool CBNO055Driver::Initialize( TwoWire *wireInterfaceIn )
 	{
 		return false;
 	}
-	
+
 	Serial.println( "bosch:g;" );
 
 	// Idempotent
@@ -508,7 +508,7 @@ bool CBNO055Driver::EnterNDOFMode()
 	Serial.println( ';' );
 }
 
-bool CBNO055Driver::GetRevInfo( TRevisionInfo& revInfoOut )
+bool CBNO055Driver::GetRevInfo( TRevisionInfo &revInfoOut )
 {
 	uint8_t a, b;
 
@@ -637,7 +637,7 @@ bool CBNO055Driver::SetUpUnitsAndOrientation()
 	return true;
 }
 
-bool CBNO055Driver::GetTemperature( int8_t& temperatureOut )
+bool CBNO055Driver::GetTemperature( int8_t &temperatureOut )
 {
 	uint8_t temp;
 
@@ -672,7 +672,7 @@ bool CBNO055Driver::GetPowerOnSelfTestResults()
 	return true;
 }
 
-bool CBNO055Driver::GetVector( EVectorType vectorTypeIn, imu::Vector<3>& vectorOut )
+bool CBNO055Driver::GetVector( EVectorType vectorTypeIn, imu::Vector<3> &vectorOut )
 {
 	// Create and zero buffer
 	uint8_t buffer[6];
@@ -686,7 +686,7 @@ bool CBNO055Driver::GetVector( EVectorType vectorTypeIn, imu::Vector<3>& vectorO
 	// Read vector data (6 bytes)
 	if( !ReadNBytes( ( ERegisterAddress )vectorTypeIn, buffer, 6 ) )
 	{
-	return false;
+		return false;
 	}
 
 	// if( I2c.read( m_i2cAddress, ( uint8_t )vectorTypeIn, ( uint8_t )6 ) )
@@ -700,7 +700,7 @@ bool CBNO055Driver::GetVector( EVectorType vectorTypeIn, imu::Vector<3>& vectorO
 	// buffer[ 3 ] = I2c.receive();
 	// buffer[ 4 ] = I2c.receive();
 	// buffer[ 5 ] = I2c.receive();
-	
+
 	// buffer[ 0 ] = m_pWire->read();
 	// buffer[ 1 ] = m_pWire->read();
 	// buffer[ 2 ] = m_pWire->read();
@@ -735,7 +735,7 @@ bool CBNO055Driver::GetVector( EVectorType vectorTypeIn, imu::Vector<3>& vectorO
 			vectorOut[0] = ( ( double )x ) / 16.0;
 			vectorOut[1] = ( ( double )y ) / 16.0;
 			vectorOut[2] = ( ( double )z ) / 16.0;
-		
+
 			break;
 
 		case VECTOR_ACCELEROMETER:
@@ -751,7 +751,7 @@ bool CBNO055Driver::GetVector( EVectorType vectorTypeIn, imu::Vector<3>& vectorO
 	return true;
 }
 
-bool CBNO055Driver::GetQuat( imu::Quaternion& quatOut )
+bool CBNO055Driver::GetQuat( imu::Quaternion &quatOut )
 {
 	// Create and zero buffer
 	uint8_t buffer[8];
@@ -784,54 +784,75 @@ bool CBNO055Driver::GetQuat( imu::Quaternion& quatOut )
 }
 
 /***************************************************************************
- PRIVATE FUNCTIONS
+    PRIVATE FUNCTIONS
  ***************************************************************************/
 
 
-bool CBNO055Driver::WriteByte(ERegisterAddress addressIn, uint8_t dataIn )
+bool CBNO055Driver::WriteByte( ERegisterAddress addressIn, uint8_t dataIn )
 {
-  m_pWire->beginTransmission(m_i2cAddress);
-    m_pWire->write((uint8_t)addressIn);
-    m_pWire->write((uint8_t)dataIn);
-  m_pWire->endTransmission();
+	m_pWire->beginTransmission( m_i2cAddress );
+	m_pWire->write( ( uint8_t )addressIn );
+	m_pWire->write( ( uint8_t )dataIn );
 
-  /* ToDo: Check for error! */
-  return true;
+	if( m_pWire->endTransmission() == 0 )
+	{
+		return true;
+	}
+
+    // Experimental: Reset the device to uninitialized
+    m_isInitialized = false;
+
+	/* ToDo: Check for error! */
+	return false;
 }
 
 
-bool CBNO055Driver::ReadByte( ERegisterAddress addressIn, uint8_t& dataOut )
+bool CBNO055Driver::ReadByte( ERegisterAddress addressIn, uint8_t &dataOut )
 {
-  byte value = 0;
+	byte value = 0;
 
-  m_pWire->beginTransmission(m_i2cAddress);
+	m_pWire->beginTransmission( m_i2cAddress );
 
-    m_pWire->write((uint8_t)addressIn);
+	m_pWire->write( ( uint8_t )addressIn );
 
-  m_pWire->endTransmission();
-  m_pWire->requestFrom(m_i2cAddress, (byte)1);
+	if( m_pWire->endTransmission() == 0 )
+	{
+		if( m_pWire->requestFrom( m_i2cAddress, ( byte )1 ) == 1 )
+		{
+			dataOut = m_pWire->read();
 
-    dataOut = m_pWire->read();
+			return true;
+		}
+	}
+	
+	// Experimental: Reset the device to uninitialized
+    m_isInitialized = false;
 
-
-  return true;
+	return false;
 }
 
-bool CBNO055Driver::ReadNBytes(ERegisterAddress addressIn, uint8_t* dataOut, uint8_t byteCountIn)
+bool CBNO055Driver::ReadNBytes( ERegisterAddress addressIn, uint8_t *dataOut, uint8_t byteCountIn )
 {
-  m_pWire->beginTransmission(m_i2cAddress);
+	m_pWire->beginTransmission( m_i2cAddress );
 
-    m_pWire->write((uint8_t)addressIn);
+	m_pWire->write( ( uint8_t )addressIn );
 
-  m_pWire->endTransmission();
-  m_pWire->requestFrom(m_i2cAddress, (byte)byteCountIn);
+	if( m_pWire->endTransmission() == 0 )
+	{
+		if( m_pWire->requestFrom( m_i2cAddress, ( byte )byteCountIn ) == byteCountIn )
+		{
+			for( uint8_t i = 0; i < byteCountIn; i++ )
+			{
+				dataOut[i] = m_pWire->read();
 
-  for (uint8_t i = 0; i < byteCountIn; i++)
-  {
-      dataOut[i] = m_pWire->read();
+			}
 
-  }
+			return true;
+		}
+	}
+	
+	// Experimental: Reset the device to uninitialized
+    m_isInitialized = false;
 
-  /* ToDo: Check for errors! */
-  return true;
+	return false;
 }

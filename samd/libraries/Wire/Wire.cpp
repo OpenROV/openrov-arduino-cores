@@ -26,308 +26,45 @@ extern "C" {
 
 #include "Wire.h"
 
-#define SAMD21_I2C_TIMEOUT  (65535)
+#define SAMD21_I2C_TIMEOUT_MS  (10)
 
 #define I2C_FLAG_WRITE      0
 #define I2C_FLAG_READ       1
 
+using namespace i2c;
+
 TwoWire::TwoWire( SERCOM *s, uint8_t pinSDA, uint8_t pinSCL )
 {
-	sercomm				= s;
-	m_pinSDA			= pinSDA;
-	m_pinSCL			= pinSCL;
-	m_transmissionBegun = false;
+	sercomm						= s;
+	m_pinSDA					= pinSDA;
+	m_pinSCL					= pinSCL;
+	m_transmissionBegun 		= false;
+	
 }
 
 void TwoWire::begin( void )
 {
-	m_pSercom = sercomm->sercom;
-
-	// Reset i2c
-	m_pSercom->I2CM.CTRLA.reg = SERCOM_I2CS_CTRLA_SWRST;
-
-	while( m_pSercom->I2CM.SYNCBUSY.reg & SERCOM_I2CM_SYNCBUSY_MASK );
-
-	uint8_t clockId = 0;
-	IRQn_Type IdNvic = PendSV_IRQn ; // Dummy init to intercept potential error later
-
-	if( m_pSercom == SERCOM0 )
-	{
-		clockId = GCM_SERCOM0_CORE;
-		IdNvic = SERCOM0_IRQn;
-	}
-	else if( m_pSercom == SERCOM1 )
-	{
-		clockId = GCM_SERCOM1_CORE;
-		IdNvic = SERCOM1_IRQn;
-	}
-	else if( m_pSercom == SERCOM2 )
-	{
-		clockId = GCM_SERCOM2_CORE;
-		IdNvic = SERCOM2_IRQn;
-	}
-	else if( m_pSercom == SERCOM3 )
-	{
-		clockId = GCM_SERCOM3_CORE;
-		IdNvic = SERCOM3_IRQn;
-	}
-	else if( m_pSercom == SERCOM4 )
-	{
-		clockId = GCM_SERCOM4_CORE;
-		IdNvic = SERCOM4_IRQn;
-	}
-	else if( m_pSercom == SERCOM5 )
-	{
-		clockId = GCM_SERCOM5_CORE;
-		IdNvic = SERCOM5_IRQn;
-	}
-
-	if( IdNvic == PendSV_IRQn )
-	{
-		// We got a problem here
-		return ;
-	}
-
-	// Setting NVIC
-	NVIC_EnableIRQ( IdNvic );
-	NVIC_SetPriority( IdNvic, ( 1 << __NVIC_PRIO_BITS ) - 1 ); /* set Priority */
-
-
-
-	//Setting clock
-	GCLK->CLKCTRL.reg = GCLK_CLKCTRL_ID( clockId ) | // Generic Clock 0 (SERCOMx)
-	                    GCLK_CLKCTRL_GEN_GCLK0 | // Generic Clock Generator 0 is source
-	                    GCLK_CLKCTRL_CLKEN ;
-
-	while( GCLK->STATUS.reg & GCLK_STATUS_SYNCBUSY )
-	{
-		/* Wait for synchronization */
-	}
-
-	GCLK->CLKCTRL.reg = GCLK_CLKCTRL_ID( GCM_SERCOMx_SLOW ) | // Generic Clock 0 (SERCOMx)
-	                    GCLK_CLKCTRL_GEN_GCLK0 | // Generic Clock Generator 0 is source
-	                    GCLK_CLKCTRL_CLKEN ;
-
-	while( GCLK->STATUS.reg & GCLK_STATUS_SYNCBUSY )
-	{
-		/* Wait for synchronization */
-	}
-
-	
-
-
-	// /* I2C CONFIGURATION */
-	while( m_pSercom->I2CM.SYNCBUSY.reg & SERCOM_I2CM_SYNCBUSY_MASK );
-
-
-
-	/* Set sercom module to operate in I2C master mode. */
-	m_pSercom->I2CM.CTRLA.reg = SERCOM_I2CM_CTRLA_MODE_I2C_MASTER	|
-	                            SERCOM_I2CM_CTRLA_LOWTOUTEN |
-	                            SERCOM_I2CM_CTRLA_INACTOUT( 0x3 );
-
-	/* Enable Smart Mode (ACK is sent when DATA.DATA is read) */
-	m_pSercom->I2CM.CTRLB.reg = SERCOM_I2CM_CTRLB_SMEN;
-
-	int32_t tmp_baud = ( int32_t )( ( ( SystemCoreClock + ( 2 * ( 400000 ) ) - 1 ) / ( 2 * ( 400000 ) ) ) - 5 );
-
-
-	if( tmp_baud < 255 && tmp_baud > 0 )
-	{
-		m_pSercom->I2CM.CTRLA.reg |= SERCOM_I2CM_CTRLA_SPEED( 0 );
-		m_pSercom->I2CM.BAUD.reg = SERCOM_I2CM_BAUD_BAUD( tmp_baud );
-	}
-
-
-	// Enable the I�C master mode
-	m_pSercom->I2CM.CTRLA.bit.ENABLE = 1 ;
-
-	while( m_pSercom->I2CM.SYNCBUSY.bit.ENABLE != 0 )
-	{
-		// Waiting the enable bit from SYNCBUSY is equal to 0;
-	}
-
-	uint32_t timeout_counter = millis();
-
-	/* Start timeout if bus state is unknown. */
-	while( !( m_pSercom->I2CM.STATUS.reg & SERCOM_I2CM_STATUS_BUSSTATE( 1 ) ) )
-	{
-		if( millis() - timeout_counter > 10 )
-		{
-			/* Timeout, force bus state to idle. */
-			m_pSercom->I2CM.STATUS.reg = SERCOM_I2CM_STATUS_BUSSTATE( 1 );
-		}
-	}
+	// Initialize in master mode
+	sercomm->InitMasterMode_TWI( DEFAULT_TWI_CLOCK );
+	sercomm->Enable_TWI();
 
 	pinPeripheral( m_pinSDA, g_APinDescription[m_pinSDA].ulPinType );
 	pinPeripheral( m_pinSCL, g_APinDescription[m_pinSCL].ulPinType );
-
 }
 
-void TwoWire::setClock( uint32_t baudrate )
+void TwoWire::setClock( uint32_t baudRateIn )
 {
-
+	// Retinitialize with new baud rate
+	sercomm->InitMasterMode_TWI( baudRateIn );
+	sercomm->Enable_TWI();
 }
 
 void TwoWire::end()
 {
-
+	sercomm->Disable_TWI();
 }
 
-int TwoWire::_read( char *data, int length )
-{
-	uint32_t timeout_counter = 0;
-	uint8_t count = 0;
-
-	/* Set action to ack. */
-	m_pSercom->I2CM.CTRLB.reg &= ~SERCOM_I2CM_CTRLB_ACKACT;
-
-
-	/* Read data buffer. */
-	while( count != length )
-	{
-		/* Check that bus ownership is not lost. */
-		if( !( m_pSercom->I2CM.STATUS.reg & SERCOM_I2CM_STATUS_BUSSTATE( 2 ) ) )
-		{
-			return -2;
-		}
-
-		/* Wait for hardware module to sync */
-		while( m_pSercom->I2CM.SYNCBUSY.reg & SERCOM_I2CM_SYNCBUSY_MASK );
-
-		/* Save data to buffer. */
-		data[count] = m_pSercom->I2CM.DATA.reg;
-
-		/* Wait for response. */
-		timeout_counter = millis();
-
-		while( !( m_pSercom->I2CM.INTFLAG.reg & SERCOM_I2CM_INTFLAG_MB ) && !( m_pSercom->I2CM.INTFLAG.reg & SERCOM_I2CM_INTFLAG_SB ) )
-		{
-			if( millis() - timeout_counter > 10  )
-			{
-				//Serial.println( "Read timeout" );
-				m_pSercom->I2CM.CTRLB.reg |= SERCOM_I2CM_CTRLB_ACKACT;
-				_stop();
-				return -1;
-			}
-		}
-
-		count++;
-	}
-
-	/* Send NACK before STOP */
-	m_pSercom->I2CM.CTRLB.reg |= SERCOM_I2CM_CTRLB_ACKACT;
-	return count;
-}
-
-
-int TwoWire::_start( uint8_t address, uint8_t rw_flag )
-{
-	uint32_t timeout_counter = 0;
-
-	/* Wait for hardware module to sync */
-	while( m_pSercom->I2CM.SYNCBUSY.reg & SERCOM_I2CM_SYNCBUSY_MASK );
-
-	/* Set action to ACK. */
-	m_pSercom->I2CM.CTRLB.reg &= ~SERCOM_I2CM_CTRLB_ACKACT;
-
-	/* Send Start | Address | Write/Read */
-	m_pSercom->I2CM.ADDR.reg = ( address << 1 ) | rw_flag;// | ( 0 << SERCOM_I2CM_ADDR_HS_Pos );
-
-	timeout_counter = millis();
-
-	/* Wait for response on bus. */
-	while( !( m_pSercom->I2CM.INTFLAG.reg & SERCOM_I2CM_INTFLAG_MB ) && !( m_pSercom->I2CM.INTFLAG.reg & SERCOM_I2CM_INTFLAG_SB ) )
-	{
-		if( millis() - timeout_counter > 10 )
-		{
-			// Serial.println( "Timeout start" );
-			m_pSercom->I2CM.CTRLB.reg |= SERCOM_I2CM_CTRLB_ACKACT;
-			_stop();
-			return -1;
-		}
-	}
-
-	/* Check for address response error unless previous error is detected. */
-	/*  Check for error and ignore bus-error; workaround for BUSSTATE
-	    stuck in BUSY */
-	if( m_pSercom->I2CM.INTFLAG.reg & SERCOM_I2CM_INTFLAG_SB )
-	{
-		/* Clear write interrupt flag */
-		m_pSercom->I2CM.INTFLAG.reg = SERCOM_I2CM_INTFLAG_SB;
-
-		/* Check arbitration. */
-		if( m_pSercom->I2CM.STATUS.reg & SERCOM_I2CM_STATUS_ARBLOST )
-		{
-			return -2;
-		}
-	}
-	/* Check that slave responded with ack. */
-	else if( m_pSercom->I2CM.STATUS.reg & SERCOM_I2CM_STATUS_RXNACK )
-	{
-		/* Slave busy. Issue ack and stop command. */
-		m_pSercom->I2CM.CTRLB.reg |= SERCOM_I2CM_CTRLB_CMD( 3 );
-		return -3;
-	}
-
-	return 0;
-}
-
-int TwoWire::_stop()
-{
-	while( m_pSercom->I2CM.SYNCBUSY.reg & SERCOM_I2CM_SYNCBUSY_MASK );
-
-	/* Stop command */
-	m_pSercom->I2CM.CTRLB.reg |= SERCOM_I2CM_CTRLB_CMD( 3 );
-}
-
-int TwoWire::_write( char *data, int length )
-{
-	uint16_t tmp_data_length 	= length;
-	uint32_t timeout_counter 	= 0;
-	uint16_t buffer_counter 	= 0;
-
-	/* Write data buffer until the end. */
-	while( tmp_data_length-- )
-	{
-		/* Check that bus ownership is not lost. */
-		if( !( m_pSercom->I2CM.STATUS.reg & SERCOM_I2CM_STATUS_BUSSTATE( 2 ) ) )
-		{
-			return -2;
-		}
-
-		/* Wait for hardware module to sync */
-		while( m_pSercom->I2CM.SYNCBUSY.reg & SERCOM_I2CM_SYNCBUSY_MASK );
-
-		m_pSercom->I2CM.DATA.reg = data[buffer_counter++];
-
-		timeout_counter = millis();
-
-		// Wait for response
-		while( !( m_pSercom->I2CM.INTFLAG.reg & SERCOM_I2CM_INTFLAG_MB ) && !( m_pSercom->I2CM.INTFLAG.reg & SERCOM_I2CM_INTFLAG_SB ) )
-		{
-			if( millis() - timeout_counter > 10 )
-			{
-				// Serial.println( "Timeout write" );
-				// timeout
-				m_pSercom->I2CM.CTRLB.reg |= SERCOM_I2CM_CTRLB_ACKACT;
-				_stop();
-				return -1;
-			}
-		}
-
-		/* Check for NACK from slave. */
-		if( m_pSercom->I2CM.STATUS.reg & SERCOM_I2CM_STATUS_RXNACK )
-		{
-			// overflow
-			return -4;
-		}
-	}
-
-	return 0;
-}
-
-uint8_t TwoWire::requestFrom( uint8_t address, size_t quantity, bool stopBit )
+uint8_t TwoWire::requestFrom( uint8_t address, size_t quantity, bool issueRepeatedStart )
 {
 	if( quantity > BUFFER_LENGTH )
 	{
@@ -335,37 +72,32 @@ uint8_t TwoWire::requestFrom( uint8_t address, size_t quantity, bool stopBit )
 	}
 
 	// Start transmission
-	if( _start( address, I2C_FLAG_READ ) < 0 )
+	int ret = sercomm->StartTransmission_TWI( address, ETWIReadWriteFlag::READ );
+	if( ret < 0 )
 	{
 		return 0;
 	}
 
 	// Read first data
-	int bytesRead = _read( m_readBuffer, quantity );
+	int bytesRead = sercomm->ReadAsMaster_TWI( m_intermediateReadBuffer, quantity, issueRepeatedStart );
 
 	if( bytesRead < 0 )
 	{
-		// Stop transmission
-		_stop();
 		return 0;
 	}
 
 	// Move data to ringbuffer
 	for( int i = 0; i < bytesRead; ++i )
 	{
-		m_rxBuffer.store_char( m_readBuffer[ i ] );
+		m_rxBuffer.store_char( m_intermediateReadBuffer[ i ] );
 	}
-
-
-	// Stop transmission
-	_stop();
 
 	return bytesRead;
 }
 
 uint8_t TwoWire::requestFrom( uint8_t address, size_t quantity )
 {
-	return requestFrom( address, quantity, true );
+	return requestFrom( address, quantity, false );
 }
 
 void TwoWire::beginTransmission( uint8_t address )
@@ -383,38 +115,41 @@ void TwoWire::beginTransmission( uint8_t address )
 //  2 : NACK on transmit of address
 //  3 : NACK on transmit of data
 //  4 : Other error
-uint8_t TwoWire::endTransmission( bool stopBit )
+uint8_t TwoWire::endTransmission( bool issueRepeatedStart )
 {
 	m_transmissionBegun = false ;
 
-	if( _start( m_txAddress, I2C_FLAG_WRITE ) < 0 )
+	if( sercomm->StartTransmission_TWI( m_txAddress, ETWIReadWriteFlag::WRITE ) < 0 )
 	{
 		return 2;
 	}
 
-	// Send all buffer
+	int byteCount = 0;
+
+	// Copy bytes from ringbuffer to intermediate buffer
 	while( m_txBuffer.available() )
 	{
-		char data = m_txBuffer.read_char();
-
-		if( _write( &data, 1 ) < 0 )
-		{
-			// Not used in riot
-			return 3;
-		}
+		m_intermediateWriteBuffer[ byteCount++ ] = m_txBuffer.read_char();
 	}
-
-
-		_stop();
-
-
+	
+	if( byteCount > BUFFER_LENGTH )
+	{
+		return 1;
+	}
+	
+	int ret = sercomm->WriteAsMaster_TWI( m_intermediateWriteBuffer, byteCount, issueRepeatedStart );
+	if( ret < 0 )
+	{
+		return 4;
+	}
+	
 	return 0;
 
 }
 
 uint8_t TwoWire::endTransmission()
 {
-	return endTransmission( true );
+	return endTransmission( false );
 }
 
 // Write a single byte

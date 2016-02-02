@@ -62,7 +62,6 @@ class TwoWire : public Stream
     void onService(void);
 
   private:
-    Sercom 			*m_pSercom;
     SERCOM 			*sercomm;
     uint8_t 		m_pinSDA;
     uint8_t 		m_pinSCL;
@@ -70,26 +69,21 @@ class TwoWire : public Stream
     bool 			m_transmissionBegun;
 
     // RX Buffer
+    uint8_t 		m_intermediateReadBuffer[ BUFFER_LENGTH ];
     RingBuffer 		m_rxBuffer;
 
     //TX buffer
+    uint8_t 		m_intermediateWriteBuffer[ BUFFER_LENGTH ];
     RingBuffer 		m_txBuffer;
     uint8_t 		m_txAddress;
     
-    char 			m_readBuffer[ BUFFER_LENGTH ];
 
     // Callback user functions
     void (*onRequestCallback)(void);
     void (*onReceiveCallback)(int);
 
     // TWI clock frequency
-    static const uint32_t TWI_CLOCK = 100000;
-    
-    
-    int _read( char *data, int length );
-    int _start( uint8_t address, uint8_t rw_flag );
-    int _stop();
-    int _write( char *data, int length);
+    static const uint32_t DEFAULT_TWI_CLOCK = 100000;
 };
 
 #if WIRE_INTERFACES_COUNT > 0
