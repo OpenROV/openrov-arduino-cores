@@ -1,10 +1,10 @@
-/*	 MS5803_30
+/*	 MS5803_14
   	An Arduino library for the Measurement Specialties MS5803 family
   	of pressure sensors. This library uses I2C to communicate with the
   	MS5803 using the Wire library from Arduino.
 
- 	This library only works with the MS5803-30BA model sensor. It DOES NOT
- 	work with the other pressure-range models such as the MS5803-14BA or
+ 	This library only works with the MS5803-14BA model sensor. It DOES NOT
+ 	work with the other pressure-range models such as the MS5803-30BA or
  	MS5803-01BA. Those models will return incorrect pressure and temperature
  	readings if used with this library. See http://github.com/millerlp for
  	libraries for the other models.
@@ -24,7 +24,7 @@
   	Copyright Luke Miller, April 1 2014
 */
 
-#include "MS5803_30.h"
+#include "MS5803_14.h"
 #include <Wire.h>
 
 // For I2C, set the CSB Pin (pin 3) high for address 0x76, and pull low
@@ -71,7 +71,7 @@ const uint64_t POW_2_37 = 137438953472ULL; // 2^37 = 137438953472
 
 //-------------------------------------------------
 // Constructor
-MS5803_30::MS5803_30( uint16_t Resolution )
+MS5803_14::MS5803_14( uint16_t Resolution )
 {
 	// The argument is the oversampling resolution, which may have values
 	// of 256, 512, 1024, 2048, or 4096.
@@ -79,7 +79,7 @@ MS5803_30::MS5803_30( uint16_t Resolution )
 }
 
 //-------------------------------------------------
-bool MS5803_30::Initialize()
+bool MS5803_14::Initialize()
 {
 
 	// Reset the sensor during startup
@@ -108,18 +108,16 @@ bool MS5803_30::Initialize()
 	}
 
 	// Read always fails for Coefficient 7, so we can't perform a CRC. Skip this step for now.
-
+	
 	// // The last 4 bits of the 7th coefficient form a CRC error checking code.
 	// unsigned char p_crc = sensorCoeffs[7];
 	// // Use a function to calculate the CRC value
-	// unsigned char n_crc = MS5803_30_CRC( sensorCoeffs );
-	
+	// unsigned char n_crc = MS_5803_CRC( sensorCoeffs );
+
 	// // If the CRC value doesn't match the sensor's CRC value, then the
 	// // connection can't be trusted. Check your wiring.
 	// if( p_crc != n_crc )
 	// {
-	// 	Serial.println("log:crcmatchfail;");
-		
 	// 	return false;
 	// }
 
@@ -134,36 +132,38 @@ bool MS5803_30::Initialize()
 	}
 }
 
+
+
 //------------------------------------------------------------------
-float MS5803_30::readSensor()
+float MS5803_14::readSensor()
 {
 	// Choose from CMD_ADC_256, 512, 1024, 2048, 4096 for mbar resolutions
 	// of 1, 0.6, 0.4, 0.3, 0.2 respectively. Higher resolutions take longer
 	// to read.
 	if( _Resolution == 256 )
 	{
-		D1 = MS5803_30_ADC( CMD_ADC_D1 + CMD_ADC_256 ); // read raw pressure
-		D2 = MS5803_30_ADC( CMD_ADC_D2 + CMD_ADC_256 ); // read raw temperature
+		D1 = MS5803_14_ADC( CMD_ADC_D1 + CMD_ADC_256 ); // read raw pressure
+		D2 = MS5803_14_ADC( CMD_ADC_D2 + CMD_ADC_256 ); // read raw temperature
 	}
 	else if( _Resolution == 512 )
 	{
-		D1 = MS5803_30_ADC( CMD_ADC_D1 + CMD_ADC_512 ); // read raw pressure
-		D2 = MS5803_30_ADC( CMD_ADC_D2 + CMD_ADC_512 ); // read raw temperature
+		D1 = MS5803_14_ADC( CMD_ADC_D1 + CMD_ADC_512 ); // read raw pressure
+		D2 = MS5803_14_ADC( CMD_ADC_D2 + CMD_ADC_512 ); // read raw temperature
 	}
 	else if( _Resolution == 1024 )
 	{
-		D1 = MS5803_30_ADC( CMD_ADC_D1 + CMD_ADC_1024 ); // read raw pressure
-		D2 = MS5803_30_ADC( CMD_ADC_D2 + CMD_ADC_1024 ); // read raw temperature
+		D1 = MS5803_14_ADC( CMD_ADC_D1 + CMD_ADC_1024 ); // read raw pressure
+		D2 = MS5803_14_ADC( CMD_ADC_D2 + CMD_ADC_1024 ); // read raw temperature
 	}
 	else if( _Resolution == 2048 )
 	{
-		D1 = MS5803_30_ADC( CMD_ADC_D1 + CMD_ADC_2048 ); // read raw pressure
-		D2 = MS5803_30_ADC( CMD_ADC_D2 + CMD_ADC_2048 ); // read raw temperature
+		D1 = MS5803_14_ADC( CMD_ADC_D1 + CMD_ADC_2048 ); // read raw pressure
+		D2 = MS5803_14_ADC( CMD_ADC_D2 + CMD_ADC_2048 ); // read raw temperature
 	}
 	else if( _Resolution == 4096 )
 	{
-		D1 = MS5803_30_ADC( CMD_ADC_D1 + CMD_ADC_4096 ); // read raw pressure
-		D2 = MS5803_30_ADC( CMD_ADC_D2 + CMD_ADC_4096 ); // read raw temperature
+		D1 = MS5803_14_ADC( CMD_ADC_D1 + CMD_ADC_4096 ); // read raw pressure
+		D2 = MS5803_14_ADC( CMD_ADC_D2 + CMD_ADC_4096 ); // read raw temperature
 	}
 
 	// Calculate 1st order temperature, dT is a long integer
@@ -188,7 +188,7 @@ float MS5803_30::readSensor()
 	// (i.e. 2^31 is hard coded as 2147483648).
 	if( TEMP < 2000 )
 	{
-		// For 30 bar model
+		// For 14 bar model // If temperature is below 20.0C
 		T2 = 3 * ( ( int64_t )dT * dT ) / POW_2_33 ;
 		T2 = ( int32_t )T2; // recast as signed 32bit integer
 		OFF2 = 3 * ( ( TEMP - 2000 ) * ( TEMP - 2000 ) ) / 2 ;
@@ -196,8 +196,8 @@ float MS5803_30::readSensor()
 	}
 	else     // if TEMP is > 2000 (20.0C)
 	{
-		// For 30 bar model
-		T2 = 7 * ( ( int64_t )dT * dT ) / POW_2_37;
+		// For 14 bar model
+		T2 = 7 * ( ( uint64_t )dT * dT ) / POW_2_37;
 		T2 = ( int32_t )T2; // recast as signed 32bit integer
 		OFF2 = 1 * ( ( TEMP - 2000 ) * ( TEMP - 2000 ) ) / 16;
 		Sens2 = 0;
@@ -206,7 +206,7 @@ float MS5803_30::readSensor()
 	// Additional compensation for very low temperatures (< -15C)
 	if( TEMP < -1500 )
 	{
-		// For 30 bar model
+		// For 14 bar model
 		OFF2 = OFF2 + 7 * ( ( TEMP + 1500 ) * ( TEMP + 1500 ) );
 		Sens2 = Sens2 + 4 * ( ( TEMP + 1500 ) * ( TEMP + 1500 ) );
 	}
@@ -215,7 +215,7 @@ float MS5803_30::readSensor()
 	// Notice lots of casts to int64_t to ensure that the
 	// multiplication operations don't overflow the original 16 bit and 32 bit
 	// integers
-	// For 30 bar sensor
+	// For 14 bar sensor
 	Offset = ( int64_t )sensorCoeffs[2] * 65536 + ( sensorCoeffs[4] * ( int64_t )dT ) / 128;
 	Sensitivity = ( int64_t )sensorCoeffs[1] * 32768 + ( sensorCoeffs[3] * ( int64_t )dT ) / 256;
 
@@ -228,13 +228,12 @@ float MS5803_30::readSensor()
 	// Final compensated pressure calculation. We first calculate the pressure
 	// as a signed 32-bit integer (mbarInt), then convert that value to a
 	// float (mbar).
-	// For 30 bar sensor
-	mbarInt = ( ( D1 * Sensitivity ) / 2097152 - Offset ) / 8192;
+	// For 14 bar sensor
+	mbarInt = ( ( D1 * Sensitivity ) / 2097152 - Offset ) / 32768;
 	mbar = ( float )mbarInt / 10;
-
+	
 	// Calculate the human-readable temperature in Celsius
 	tempC  = ( float )TEMP / 100;
-
 	
 	return mbar;
 }
@@ -244,7 +243,7 @@ float MS5803_30::readSensor()
 // calculated CRC value from the rest of the coefficients.
 // Based on code from Measurement Specialties application note AN520
 // http://www.meas-spec.com/downloads/C-Code_Example_for_MS56xx,_MS57xx_%28except_analog_sensor%29_and_MS58xx_Series_Pressure_Sensors.pdf
-unsigned char MS5803_30::MS5803_30_CRC( unsigned int n_prom[] )
+unsigned char MS5803_14::MS5803_14_CRC( unsigned int n_prom[] )
 {
 	int cnt;				// simple counter
 	unsigned int n_rem;		// crc reminder
@@ -287,11 +286,12 @@ unsigned char MS5803_30::MS5803_30_CRC( unsigned int n_prom[] )
 
 //-----------------------------------------------------------------
 // Send commands and read the temperature and pressure from the sensor
-unsigned long MS5803_30::MS5803_30_ADC( char commandADC )
+unsigned long MS5803_14::MS5803_14_ADC( char commandADC )
 {
 	// D1 and D2 will come back as 24-bit values, and so they must be stored in
 	// a long integer on 8-bit Arduinos.
 	long result = 0;
+	
 	// Send the command to do the ADC conversion on the chip
 	Wire.beginTransmission( MS5803_I2C_ADDRESS );
 	Wire.write( CMD_ADC_CONV + commandADC );
@@ -327,6 +327,7 @@ unsigned long MS5803_30::MS5803_30_ADC( char commandADC )
 	Wire.beginTransmission( MS5803_I2C_ADDRESS );
 	Wire.write( ( byte )CMD_ADC_READ );
 	Wire.endTransmission();
+	
 	// Then request the results. This should be a 24-bit result (3 bytes)
 	Wire.requestFrom( MS5803_I2C_ADDRESS, 3 );
 
@@ -344,7 +345,7 @@ unsigned long MS5803_30::MS5803_30_ADC( char commandADC )
 
 //----------------------------------------------------------------
 // Sends a power on reset command to the sensor.
-void MS5803_30::resetSensor()
+void MS5803_14::resetSensor()
 {
 	Wire.beginTransmission( MS5803_I2C_ADDRESS );
 	Wire.write( CMD_RESET );
