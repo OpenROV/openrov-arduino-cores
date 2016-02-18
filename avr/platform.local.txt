@@ -1,0 +1,10 @@
+# This file contains overrided values to make sure that we don't have to modify standard path variables
+# This was necessary because arduino-builder wasn't properly detecting certain runtime.x paths
+
+# ctags
+# ------------------------------
+tools.ctags.path=/opt/openrov/arduino/hardware/tools/
+tools.ctags.cmd.path={path}/ctags
+tools.ctags.pattern="{cmd.path}" -u --language-force=c++ -f - --c++-kinds=svpf --fields=KSTtzns --line-directives "{source_file}"
+
+
