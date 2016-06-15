@@ -68,8 +68,8 @@ extern "C"
 #define PIN_LED_0          	(31u)
 #define PIN_LED_1          	(28u)
 
-#define PIN_LED  			PIN_LED_0
-#define LED_BUILTIN 		PIN_LED_0
+#define PIN_LED  			      PIN_LED_0
+#define LED_BUILTIN 		    PIN_LED_0
 
 
 #define ADC_RESOLUTION      12
@@ -91,12 +91,7 @@ extern "C"
 #define PAD_SERIAL1_RX       (SERCOM_RX_PAD_1)
 
 // SPI interfaces
-#define SPI_INTERFACES_COUNT 1
-
-#define PIN_SPI_MISO         (41u)
-// #define PIN_SPI_SS           (43u)
-#define PIN_SPI_MOSI         (39u)
-#define PIN_SPI_SCK          (40u)
+#define SPI_INTERFACES_COUNT 0
 
 static const uint8_t MISO = PIN_SPI_MISO;
 // static const uint8_t SS	  = PIN_SPI_SS ;
