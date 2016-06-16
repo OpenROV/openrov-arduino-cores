@@ -50,8 +50,8 @@ extern "C"
 
 // Number of pins defined in PinDescription array
 #define PINS_COUNT           (65u) // There are actually 64 pins, but the first pin in the pin descriptors is a dummy used to offset the pins to be 1-based
-#define NUM_DIGITAL_PINS     (7u)
-#define NUM_ANALOG_INPUTS    (12u)
+#define NUM_DIGITAL_PINS     (14u)
+#define NUM_ANALOG_INPUTS    (14u)
 #define NUM_ANALOG_OUTPUTS   (0u)
 
 #define digitalPinToPort(P)        ( &(PORT->Group[g_APinDescription[P].ulPort]) )
@@ -71,8 +71,7 @@ extern "C"
 #define PIN_LED  			      PIN_LED_0
 #define LED_BUILTIN 		    PIN_LED_0
 
-
-#define ADC_RESOLUTION      12
+#define ADC_RESOLUTION      10
 
 // UART Interfaces
 
@@ -85,30 +84,38 @@ extern "C"
 #define PAD_SERIAL_RX       (SERCOM_RX_PAD_1)
 
 // UART1 (Programming/aux serial port)
-#define PIN_SERIAL1_RX       (44u)
-#define PIN_SERIAL1_TX       (43u)
+#define PIN_SERIAL1_RX       (30u)
+#define PIN_SERIAL1_TX       (29u)
 #define PAD_SERIAL1_TX       (UART_TX_PAD_0)
 #define PAD_SERIAL1_RX       (SERCOM_RX_PAD_1)
+
+// UART2 (Programming/aux serial port)
+#define PIN_SERIAL2_RX       (36u)
+#define PIN_SERIAL2_TX       (35u)
+#define PAD_SERIAL2_TX       (UART_TX_PAD_0)
+#define PAD_SERIAL2_RX       (SERCOM_RX_PAD_1)
+
+// UART3 (Programming/aux serial port)
+#define PIN_SERIAL3_RX       (44u)
+#define PIN_SERIAL3_TX       (43u)
+#define PAD_SERIAL3_TX       (UART_TX_PAD_0)
+#define PAD_SERIAL3_RX       (SERCOM_RX_PAD_1)
+
+// UART4 (Programming/aux serial port)
+#define PIN_SERIAL4_RX       (60u)
+#define PIN_SERIAL4_TX       (59u)
+#define PAD_SERIAL4_TX       (UART_TX_PAD_0)
+#define PAD_SERIAL4_RX       (SERCOM_RX_PAD_1)
 
 // SPI interfaces
 #define SPI_INTERFACES_COUNT 0
 
-static const uint8_t MISO = PIN_SPI_MISO;
-// static const uint8_t SS	  = PIN_SPI_SS ;
-static const uint8_t MOSI = PIN_SPI_MOSI ;
-static const uint8_t SCK  = PIN_SPI_SCK ;
-
-
 // I2C Interfaces
-#define WIRE_INTERFACES_COUNT 2
-
-// SERCOM4
-#define PIN_WIRE_SDA         (29u)
-#define PIN_WIRE_SCL         (30u)
+#define WIRE_INTERFACES_COUNT 1
 
 // SERCOM2
-#define PIN_WIRE1_SDA         (17u)
-#define PIN_WIRE1_SCL         (18u)
+#define PIN_WIRE_SDA         (17u)
+#define PIN_WIRE_SCL         (18u)
 
 // Unused USB pins
 #define PIN_USB_DM 0
@@ -138,6 +145,9 @@ extern SERCOM sercom5;
 
 extern Uart Serial;
 extern Uart Serial1;
+extern Uart Serial2;
+extern Uart Serial3;
+extern Uart Serial4;
 
 #endif
 
@@ -164,14 +174,15 @@ extern Uart Serial1;
 #define SERIAL_PORT_HARDWARE1       Serial1
 #define SERIAL_PORT_HARDWARE_OPEN1  Serial1
 
-#define PERIPH_WIRE          		    sercom4
-#define WIRE_IT_HANDLER      		    SERCOM4_Handler
+#define SERIAL_PORT_HARDWARE2       Serial2
+#define SERIAL_PORT_HARDWARE_OPEN2  Serial2
 
-#define PERIPH_WIRE1          		  sercom2
-#define WIRE1_IT_HANDLER      		  SERCOM2_Handler
+#define SERIAL_PORT_HARDWARE2       Serial3
+#define SERIAL_PORT_HARDWARE_OPEN2  Serial3
 
-// TODO: What the hell is this
-#define PERIPH_SPI           		sercom5
-#define PAD_SPI_TX           		SPI_PAD_2_SCK_3
-#define PAD_SPI_RX           		SERCOM_RX_PAD_0
+#define SERIAL_PORT_HARDWARE2       Serial4
+#define SERIAL_PORT_HARDWARE_OPEN2  Serial4
+
+#define PERIPH_WIRE          		    sercom2
+#define WIRE_IT_HANDLER      		    SERCOM2_Handler
 
