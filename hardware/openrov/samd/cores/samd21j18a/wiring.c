@@ -93,8 +93,7 @@ void init( void )
   while( ADC->STATUS.bit.SYNCBUSY == 1 );          // Wait for synchronization of registers between the clock domains
 
   ADC->CTRLB.reg = ADC_CTRLB_PRESCALER_DIV512 |    // Divide Clock by 512.
-  					ADC_CTRLB_RESSEL_12BIT_Val;
-                   //ADC_CTRLB_RESSEL_10BIT;         // 10 bits resolution as default
+  					ADC_CTRLB_RESSEL_10BIT_Val;
 
   ADC->SAMPCTRL.reg = 0x3f;                        // Set max Sampling Time Length
 
