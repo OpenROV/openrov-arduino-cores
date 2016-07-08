@@ -196,14 +196,13 @@ public:
 	void PrepareNack_TWI();
 	void PrepareAck_TWI();
 	void SendCommand_TWI( i2c::ETWIMasterCommand commandIn );
-	void SetTimeout_TWI( uint32_t timeoutMsIn );
 	void SyncReset_TWI();
 	void SyncEnable_TWI();
 	void SyncSysOp_TWI();
 	void SyncBusy_TWI();
 	void ClearInterruptMB_TWI();
 	void ClearInterruptSB_TWI();
-	void MoveToIdleBusState_TWI();
+	void WaitForIdleBusState_TWI();
 
 	int StartTransmission_TWI( uint8_t addressIn, i2c::ETWIReadWriteFlag flagIn );
 	int ReadAsMaster_TWI( uint8_t *dataOut, int lengthIn, bool sendRepeatedStart = false );
@@ -211,17 +210,22 @@ public:
 	
 	int WriteAsSlave_TWI( uint8_t dataIn );
 
+	int SyncWaitBus_TWI();
+
 	bool IsRXNackReceived_TWI();
 	bool IsArbitrationLost_TWI();
 	bool IsBusError_TWI();
 	bool CheckInterruptMB_TWI();
 	bool CheckInterruptSB_TWI();
+	bool CheckInterruptERROR_TWI();
 	bool HasBusOwnership_TWI();
 	bool IsBusStateIdle_TWI();
 	bool IsMasterExtendedSCLTimeout_TWI();
 	bool IsMasterMode_TWI();
 	bool IsSlaveMode_TWI();
+	bool IsBusAvailable_TWI();
 
+	// Slave functions
 	bool IsDataReady_TWI();
 	bool IsStopDetected_TWI();
 	bool IsRestartDetected_TWI();
@@ -232,9 +236,10 @@ public:
 private:
 	// Shared private members
 	Sercom* sercom;
-	
-	uint32_t m_timeout_ms = 10;
+
 	uint32_t m_startTime = 0;
+
+	bool m_twiAvailable = false;
 
 	// Methods
 	uint8_t CalculateBaudrateSynchronous( uint32_t baudrateIn );
