@@ -106,44 +106,91 @@ typedef enum
 	SPI_CHAR_SIZE_9_BITS
 } SercomSpiCharSize;
 
+// ----------------------------------------
+// I2C Definitions
+// ----------------------------------------
 
-// TWI enums
-namespace i2c
+#define I2C_DEFAULT_BAUD            100000
+#define I2C_MAX_BAUD                400000
+
+// Flags
+#define I2C_FLAG_STOP 		(1 << 0)	// Issue a stop condition
+#define I2C_FLAG_READ 		(1 << 1)	// Perform a read operation
+#define I2C_FLAG_BUSY 		(1 << 2)	// Transaction is in progress
+#define I2C_FLAG_FAIL 		(1 << 3)	// Transaction failed
+
+namespace I2C
 {
-	enum ETWIMode : uint8_t 
+	enum EMode : uint8_t 
 	{
-		SLAVE = 0x4u,
-		MASTER = 0x5u
+		SLAVE   = 0x4,
+		MASTER  = 0x5
 	};
 	
-	enum ETWIBusState: uint8_t 
+	enum EBusState: uint8_t 
 	{
-		UNKNOWN = 0x0ul,
-		IDLE,
-		OWNER,
-		BUSY
+		UNKNOWN = 0x0,
+		IDLE	= 0x1,
+		OWNER	= 0x2,
+		BUSY	= 0x3
 	};
 	
-	enum ETWIReadWriteFlag: uint8_t 
+	enum EReadWriteFlag: uint8_t 
 	{
-		WRITE = 0x0ul,
-		READ
+		WRITE   = 0x0,
+		READ	= 0x1
+	};
+  
+  	enum EAckAction: uint8_t
+	{
+		ACK 	= 0x0,
+		NACK 	= 0x1
 	};
 	
-	enum ETWIMasterCommand: uint8_t 
+	enum EMasterCommand: uint8_t 
 	{
-		NO_ACTION = 0,
-		REPEAT_START,
-		BYTE_READ,
-		STOP
-	} ;
+		NO_ACTION 		= 0x0,
+		REPEAT_START	= 0x1,
+		BYTE_READ		= 0x2,
+		STOP			= 0x3
+	};
 	
-	enum ETWIMasterAckAction: uint8_t
+	enum ERetCode: int32_t
 	{
-		ACK 	= 0,
-		NACK 	= 1
+		SUCCESS						= 0,                     
+		ERR_INVALID_ARG        		= -1,
+		ERR_DENIED               	= -2,
+		ERR_ALREADY_INITIALIZED  	= -3,
+		ERR_NOT_INITIALIZED      	= -4,
+		ERR_BAUDRATE_UNAVAILABLE 	= -5,
+		ERR_UNSUPPORTED_OP        	= -6,
+		ERR_NOT_READY				= -7
+	};
+	
+	enum ETransactionRetCode: int32_t
+	{
+		SUCCESS                 = 0,   	// Operation successful
+		ACK                   	= -1,  	// Received ACK from device on I2C bus
+		NACK                  	= -2,  	// Received NACK from device on I2C bus
+		ERR_ARBLOST           	= -3,  	// Arbitration lost
+		ERR_BAD_ADDRESS       	= -4, 	// Bad address
+		ERR_BUS               	= -5,  	// Bus error
+		ERR_BUSY              	= -6,  	// Device busy
+		ERR_PACKAGE_COLLISION 	= -7,  	// Package collision
+		ERR_TIMEOUT				= -8
+	};
+	
+	struct TTransaction
+	{
+		uint8_t 	slaveAddress;
+		uint16_t 	flags;
+		uint32_t	length;
+		uint8_t		*buffer;
 	};
 }
+
+// Error definitions
+
 
 class SERCOM
 {
@@ -153,7 +200,7 @@ public:
 	/* ========== UART ========== */
 	void initUART( SercomUartMode mode, SercomUartSampleRate sampleRate, uint32_t baudrate = 0 ) ;
 	void initFrame( SercomUartCharSize charSize, SercomDataOrder dataOrder, SercomParityMode parityMode, SercomNumberStopBit nbStopBits ) ;
-	void initPads( SercomUartTXPad txPad, SercomRXPad rxPad ) ;
+	void initPads( SercomUartTXPad txPad, SercomRXPad rxPad );
 
 	void resetUART( void ) ;
 	void enableUART( void ) ;
@@ -187,59 +234,64 @@ public:
 	bool isTransmitCompleteSPI( void ) ;
 	bool isReceiveCompleteSPI( void ) ;
 
-	/* ========== WIRE ========== */
-	void InitMasterMode_TWI( uint32_t baudRateIn );
-	void InitSlaveMode_TWI( uint8_t addressIn );
-	void Reset_TWI();
-	void Enable_TWI();
-	void Disable_TWI();
-	void PrepareNack_TWI();
-	void PrepareAck_TWI();
-	void SendCommand_TWI( i2c::ETWIMasterCommand commandIn );
-	void SyncReset_TWI();
-	void SyncEnable_TWI();
-	void SyncSysOp_TWI();
-	void SyncBusy_TWI();
-	void ClearInterruptMB_TWI();
-	void ClearInterruptSB_TWI();
-	void WaitForIdleBusState_TWI();
-
-	int StartTransmission_TWI( uint8_t addressIn, i2c::ETWIReadWriteFlag flagIn );
-	int ReadAsMaster_TWI( uint8_t *dataOut, int lengthIn, bool sendRepeatedStart = false );
-	int WriteAsMaster_TWI( uint8_t *dataIn, int lengthIn, bool sendRepeatedStart = false );
+	/* ========== I2C ========== */
+	int32_t InitMasterMode_I2C( uint32_t baudRateIn, uint16_t optionsIn );
 	
-	int WriteAsSlave_TWI( uint8_t dataIn );
+	int32_t Enable_I2C();
+	int32_t Disable_I2C();
+	int32_t Reset_I2C();
+	int32_t SetBaudRate_I2C( uint32_t baudRateIn );
+	
+	
+	int32_t WaitForIdleBusState_I2C();
+	int32_t WaitForInterrupt_I2C();
+	int32_t SendCommand_I2C( i2c::EI2CMasterCommand commandIn );
+	
+	void WriteCTRLA_I2C( uint16_t dataIn );
+	void WriteCTRLB_I2C( uint16_t dataIn );
+	
+	void PrepareNack_I2C();
+	void PrepareAck_I2C();
+	
+	void SyncReset_I2C();
+	void SyncEnable_I2C();
+	void SyncSysOp_I2C();
+	void SyncBusy_I2C();
+	
+	void ClearInterruptMB_I2C();
+	void ClearInterruptSB_I2C();
+	void ClearInterruptERROR_I2C();
 
-	int SyncWaitBus_TWI();
+	bool IsEnabled_I2C();
 
-	bool IsRXNackReceived_TWI();
-	bool IsArbitrationLost_TWI();
-	bool IsBusError_TWI();
-	bool CheckInterruptMB_TWI();
-	bool CheckInterruptSB_TWI();
-	bool CheckInterruptERROR_TWI();
-	bool HasBusOwnership_TWI();
-	bool IsBusStateIdle_TWI();
-	bool IsMasterExtendedSCLTimeout_TWI();
-	bool IsMasterMode_TWI();
-	bool IsSlaveMode_TWI();
-	bool IsBusAvailable_TWI();
+	bool CheckInterruptMB_I2C();
+	bool CheckInterruptSB_I2C();
+	bool CheckInterruptERROR_I2C();
+	
+	bool IsRXNackReceived_I2C();
+	
+	bool IsBusError_I2C();
+	bool IsArbitrationLost_I2C();
 
-	// Slave functions
-	bool IsDataReady_TWI();
-	bool IsStopDetected_TWI();
-	bool IsRestartDetected_TWI();
-	bool IsAddressMatch_TWI();
-	bool IsMasterReadOperation_TWI();
-	bool IsDataAvailable_TWI();
+	bool IsBusStateUnknown_I2C();
+	bool IsBusStateIdle_I2C();
+	bool IsBusStateBusy_I2C();
+	bool IsBusStateOwner_I2C();
+	
+	bool IsAvailable_I2C();
 
 private:
 	// Shared private members
-	Sercom* sercom;
+	Sercom* 		sercom;
 
-	uint32_t m_startTime = 0;
+	// ----------------
+	// I2C attributes
+	TTransaction	m_transaction;
 
-	bool m_twiAvailable = false;
+	bool 			m_isAvailable = false;
+	uint32_t 		m_startTime = 0;
+	const uint16_t  m_kTRise_ns = 215;
+
 
 	// Methods
 	uint8_t CalculateBaudrateSynchronous( uint32_t baudrateIn );
