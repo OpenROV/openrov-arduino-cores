@@ -191,6 +191,7 @@ namespace I2C
 		uint8_t 	slaveAddress;
 		EBusCommand busCommand;
 		EAction 	action;
+		bool		failed;
 
 		uint32_t	length;
 		uint8_t		*buffer;
@@ -272,19 +273,12 @@ public:
 	void ClearInterruptERROR_I2C();
 
 	bool IsEnabled_I2C();
-	bool IsRXNackReceived_I2C();
-	
-	bool IsBusError_I2C();
-	bool IsArbitrationLost_I2C();
-
-	bool IsBusStateUnknown_I2C();
-	bool IsBusStateIdle_I2C();
-	bool IsBusStateBusy_I2C();
-	bool IsBusStateOwner_I2C();
 
 	// -----------------------
 	// Reads
 	sercom_i2cm_intflag_reg_t ReadRegisterINTFLAG_I2C();
+	sercom_i2cm_status_reg_t ReadRegisterSTATUS_I2C();
+	sercom_i2cm_data_reg_t ReadRegisterDATA_I2C();
 
 	uint8_t ReadValueSTATUS_BUSSTATE_I2C();
 	uint8_t ReadValueCTRLA_SCLSM_I2C();
@@ -304,6 +298,7 @@ public:
 	void WriteSTATUS_I2C( sercom_i2cm_status_reg_t dataIn );
 
 	void WriteADDR_I2C( sercom_i2cm_addr_reg_t dataIn );
+	void WriteDATA_I2C( sercom_i2cm_data_reg_t dataIn );
 
 private:
 	// Shared private members

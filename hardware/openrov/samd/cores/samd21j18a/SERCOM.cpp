@@ -616,7 +616,7 @@ bool SERCOM::IsBusStateIdle_I2C()
 	return GetBusState_I2C() == SERCOM_I2CM_STATUS_BUSSTATE( EI2CBusState::IDLE );
 }
 
-uint8_t SERCOM::ReadRegisterINTFLAG_I2C()
+sercom_i2cm_intflag_reg_t SERCOM::ReadRegisterINTFLAG_I2C()
 {
 	return sercom->I2CM.INTFLAG.reg;
 }
@@ -667,11 +667,30 @@ void SERCOM::PrepareAck_I2C()
 	ClearBitsCTRLB_I2C( SERCOM_I2CM_CTRLB_ACKACT );
 }
 
-void SERCOM::WriteADDR_I2C( uint32_t dataIn )
+void SERCOM::WriteADDR_I2C( sercom_i2cm_addr_reg_t dataIn )
 {
 	SyncSysOp_I2C();
 
 	sercom->I2CM.ADDR.reg = dataIn;
+}
+
+sercom_i2cm_status_reg_t SERCOM::ReadRegisterSTATUS_I2C()
+{
+	SyncSysOp_I2C();
+
+	return sercom->I2CM.STATUS.reg;
+}
+
+void SERCOM::WriteDATA_I2C( sercom_i2cm_data_reg_t dataIn )
+{
+	SyncSysOp_I2C();
+
+	sercom->I2CM.DATA.reg = dataIn;
+}
+
+sercom_i2cm_data_reg_t SERCOM::ReadRegisterDATA_I2C()
+{
+	return sercom->I2CM.DATA.reg;
 }
 
 // ------------------------
@@ -696,18 +715,27 @@ int32_t PerformTransaction_I2C( TTransaction *transactionIn )
 	// Start transaction
 	ret = StartTransaction_I2C();
 
+	// Handle any errors from initial part of transaction
 	if( ret )
 	{
-		// TODO: Recovery action here?
+		if( ret == I2C::ERetCode::ERR_TIMEOUT )
+		{
+			// Handle timeout
+			SendStop_I2C();
+			m_isBusy = false;
 
-		// Clear busy status
-		m_isBusy = false;
-
-		return ret;
+			return ret;
+		}
+		else
+		{
+			// Error handling already done in FinishTransaction_I2C
+			return ret;
+		}
 	}
 
 	uint8_t flags = 0;
 
+	// Handle any further transactions with this slave (multi-byte reads and writes)
 	while( m_isBusy )
 	{
 		// Wait for interrupts
@@ -716,33 +744,14 @@ int32_t PerformTransaction_I2C( TTransaction *transactionIn )
 		// Check for timeout
 		if( ret == I2C::ERetCode::ERR_TIMEOUT )
 		{
-			// TODO: Shouldn't we just always send a stop here to return the bus to idle?
-			if( m_transaction.busCommand == I2C::EBusCommand::STOP )
-			{
-				SendStop_I2C();
-			}
-
+			SendStop_I2C();
 			m_isBusy = false;
 			return ret;
 		}
-
-		// Check for error intflag
-		if( flags & I2C::EInterruptFlags::INTFLAG_ERROR )
+		else
 		{
-			// Clear flag
-
-			// Handle
-
-			m_isBusy = false;
-			return ret;
-		}
-
-		// FinishTransaction
-		ret = FinishTransaction_I2C( flags );
-
-		if( ret )
-		{
-			// Handle errors
+			// Finish Transaction
+			ret = FinishTransaction_I2C( flags );
 		}
 	}
 
@@ -751,6 +760,8 @@ int32_t PerformTransaction_I2C( TTransaction *transactionIn )
 
 int32_t SERCOM::StartTransaction_I2C()
 {
+	int32_t ret;
+	uint8_t flags = 0;
 	uint8_t sclsm = ReadBitCTRLA_SCLSM_I2C();
 
 	if( m_transaction.length == 1 && sclsm )
@@ -765,17 +776,135 @@ int32_t SERCOM::StartTransaction_I2C()
 	}
 
 	// Set the address and R/W bit
-	sercom->I2CM.ADDR.reg = ( addressIn << 1 ) | m_transaction.action;
+	WriteADDR_I2C( ( addressIn << 1 ) | m_transaction.action );
+
+	// Wait for interrupts
+	ret = WaitForInterrupt_I2C( flags );
+
+	if( ret == I2C::ERetCode::ERR_TIMEOUT )
+	{
+		return ret;
+	}
+
+	return FinishTransaction_I2C( flags );
 
 }
 
 int32_t SERCOM::FinishTransaction_I2C( uint8_t flagsIn )
 {
+	// Get SCLSM and Status
+	uint8_t sclsm 					= ReadBitCTRLA_SCLSM_I2C();
+	sercom_i2cm_status_reg_t status = ReadRegisterSTATUS_I2C();
 
+	if( flags & I2C::EInterruptFlags::INTFLAG_MB )
+	{
+		if( status & SERCOM_I2CM_STATUS_ARBLOST ) 
+		{
+			// Arbitration lost
+			ClearInterruptMB_I2C();
+
+			// Now that MB is cleared, the while loop in transfer will time out
+
+			m_transaction.failed = true;
+			m_isBusy = false;
+
+			if( status & SERCOM_I2CM_STATUS_BUSERR ) 
+			{
+				// Bus error
+				return I2C::ERetCode::ERR_BUS;
+			}
+
+			// Otherwise, bad address/non-existent slave
+			return I2C::ERetCode::BAD_ADDRESS;
+		}
+		else
+		{
+			// Handle NACK from slave
+			if( status & SERCOM_I2CM_STATUS_RXNACK ) 
+			{
+				if( m_transaction.length > 0 ) 
+				{
+					m_transaction.failed = true;
+				}
+
+				SendStop_I2C();
+				m_isBusy = false;
+
+				return I2C::ERetCode::NACK;
+			}
+
+			// Handle end of transfer
+			if( m_transaction.length == 0 ) 
+			{
+				SendStop_I2C();
+				m_isBusy = false;
+			} 
+			else 
+			{
+				// Write the next byte of data - this will also clear the MB intflag
+				WriteDATA_I2C( *m_transaction.buffer );
+
+				// Move forward in transaction buffer
+				m_transaction.buffer++;
+				m_transaction.length--;
+			}
+
+			return I2C::ERetCode::SUCCESS;
+		}
+	}
+	else if( flags & I2C::EInterruptFlags::INTFLAG_SB )
+	{
+		if( ( m_transaction.length > 0 ) && !( status & SERCOM_I2CM_STATUS_RXNACK ) ) 
+		{
+			// Slave accepted read request and there are more bytes to read
+			m_transaction.length--;
+
+			// Last byte, prepare NACK if necessary
+			if( ( m_transaction.length == 0 && !sclsm ) || ( m_transaction.length == 1 && sclsm ) ) 
+			{
+				PrepareNack_I2C();
+			}
+
+			/* Accessing DATA.DATA auto-triggers I2C bus operations.
+			 * The operation performed depends on the state of
+			 * CTRLB.ACKACT, CTRLB.SMEN **/
+
+			// Read byte from DATA register
+			*m_transaction.buffer++ = ReadRegisterDATA_I2C();
+
+			// Transaction complete
+			if( m_transaction.length == 0 ) 
+			{
+				SendStop_I2C();
+				m_isBusy = false;
+			}
+		} 
+		else 
+		{
+			// Slave denied read
+			ClearInterruptSB_I2C();
+
+			// Eventually we will time out in the while loop in Transfer(). No need to send a stop here.
+
+			return I2C::ERetCode::NACK;
+		}
+
+		ClearInterruptSB_I2C();
+	}
+	else if( flags & I2C::EInterruptFlags::INTFLAG_ERROR )
+	{
+		// TODO: May be unnecessary 
+		SendStop_I2C();
+
+		m_isBusy = false;
+
+		ClearInterruptERROR_I2C();
+
+		return I2C::ERetCode::ERR_BUS;
+	}
+
+	return I2C::ERetCode::SUCCESS;
 }
-
-
-
 
 // Check
 void SERCOM::ClearInterruptMB_I2C()
@@ -786,7 +915,7 @@ void SERCOM::ClearInterruptMB_I2C()
 	//	- Writing to DATA.DATA
 	//	- Reading DATA.DATA when Smart Mode is enabled
 	//	- Writing a valid command to CTRLB.CMD
-	sercom->I2CM.INTFLAG.reg |= SERCOM_I2CM_INTFLAG_MB;
+	sercom->I2CM.INTFLAG.reg = SERCOM_I2CM_INTFLAG_MB;
 }
 
 void SERCOM::ClearInterruptSB_I2C()
@@ -797,216 +926,13 @@ void SERCOM::ClearInterruptSB_I2C()
 	//	- Writing to DATA.DATA
 	//	- Reading DATA.DATA when Smart Mode is enabled
 	//	- Writing a valid command to CTRLB.CMD
-	sercom->I2CM.INTFLAG.reg |= SERCOM_I2CM_INTFLAG_SB;
+	sercom->I2CM.INTFLAG.reg = SERCOM_I2CM_INTFLAG_SB;
 }
 
-int SERCOM::StartTransmission_I2C( uint8_t addressIn, EI2CReadWriteFlag flagIn )
+void SERCOM::ClearInterruptERROR_I2C()
 {
-	// Send Start | Address | Write/Read
-	sercom->I2CM.ADDR.reg = ( addressIn << 1 ) | flagIn;
-
-	// Wait for activity on the bus (or timeout)
-	int ret = SyncWaitBus_I2C();
-
-	if( ret == 0 )
-	{
-		// Analyze
-		if( CheckInterruptMB_I2C() )
-		{
-
-		}
-		else if( CheckInterruptSB_I2C() )
-		{
-
-		}
-	}
-	else
-	{
-		// Handle timeout
-
-		// Send stop, pushign us back into idle
-		// Return failure
-	}
-
-	// All is well. Following read or write commands will clear interrupt bits for us
-	return 0;
-}
-
-int SERCOM::ReadAsMaster_I2C( uint8_t *dataOut, int lengthIn, bool sendRepeatedStart )
-{
-	uint8_t bytesRead = 0;
-
-	// Read data into buffer
-	while( bytesRead != lengthIn )
-	{
-		m_timeout = millis();
-			
-		// Wait for the next byte to come in. We can either fail here via the slave not writing data or loss of arbitration. We force a NACK/STOP in either case to recover.
-		while( !CheckInterruptMB_I2C() && !CheckInterruptSB_I2C() )
-		{
-			// Handle loss of arbitration
-			if( IsArbitrationLost_I2C() )
-			{
-				PrepareNack_I2C();
-				SendCommand_I2C( EI2CMasterCommand::STOP );
-				return -2;
-			}
-			
-			// Handle bus error
-			if( IsBusError_I2C() )
-			{
-				PrepareNack_I2C();
-				SendCommand_I2C( EI2CMasterCommand::STOP );
-				return -3;
-			}
-			
-			// Handle timeout
-			if( millis() - m_timeout >= m_timeout_ms )
-			{
-				PrepareNack_I2C();
-				SendCommand_I2C( EI2CMasterCommand::STOP );
-				return -1;
-			}
-		}
-		
-		// Copy data from DATA register to user buffer (clears SB intflag )
-		dataOut[ bytesRead ] = sercom->I2CM.DATA.bit.DATA;
-		bytesRead++;
-		
-		if( bytesRead == lengthIn )
-		{
-			break;
-		}
-		 
-		// Issue read command to get the next byte
-		PrepareAck_I2C();
-		SendCommand_I2C( EI2CMasterCommand::BYTE_READ );
-	}
-
-	// Send NACK/STOP to signal that master is finished reading
-	PrepareNack_I2C();
-	
-	if( sendRepeatedStart )
-	{
-		SendCommand_I2C( EI2CMasterCommand::REPEAT_START );
-	}
-	else
-	{
-		SendCommand_I2C( EI2CMasterCommand::STOP );
-	}
-	
-	return bytesRead;
-}
-
-int SERCOM::WriteAsMaster_I2C( uint8_t *dataIn, int lengthIn, bool sendRepeatedStart )
-{
-	uint16_t bytesRemaining	= lengthIn;
-	uint16_t bufferIndex 	= 0;
-
-	// Write bytes
-	while( bytesRemaining-- )
-	{
-		// Write byte of data to the DATA register
-		sercom->I2CM.DATA.bit.DATA = dataIn[ bufferIndex++ ];
-
-		m_timeout = millis();
-
-		// Wait for ACK/NACK
-		while( !(sercom->I2CM.INTFLAG.reg & SERCOM_I2CM_INTFLAG_MB) )
-		{
-			// Handle loss of arbitration
-			if( IsArbitrationLost_I2C() )
-			{
-				PrepareNack_I2C();
-				SendCommand_I2C( EI2CMasterCommand::STOP );
-				return -2;
-			}
-			
-			// Handle bus error
-			if( IsBusError_I2C() )
-			{
-				PrepareNack_I2C();
-				SendCommand_I2C( EI2CMasterCommand::STOP );
-				return -3;
-			}
-			
-			// Handle timeout
-			if( millis() - m_timeout >= m_timeout_ms )
-			{
-				PrepareNack_I2C();
-				SendCommand_I2C( EI2CMasterCommand::STOP );
-				return -1;
-			}
-		}
-
-		// Check for NACK from slave
-		if( sercom->I2CM.STATUS.reg & SERCOM_I2CM_STATUS_RXNACK )
-		{
-			PrepareNack_I2C();
-			SendCommand_I2C( EI2CMasterCommand::STOP );
-			return -4;
-		}
-	}
-	
-	if( sendRepeatedStart )
-	{
-		SendCommand_I2C( EI2CMasterCommand::REPEAT_START );
-	}
-	else
-	{
-		SendCommand_I2C( EI2CMasterCommand::STOP );
-	}
-
-
-	return 0;
-}
-
-
-bool SERCOM::IsRXNackReceived_I2C()
-{
-	return ( sercom->I2CM.STATUS.reg & SERCOM_I2CM_STATUS_RXNACK );
-}
-
-bool SERCOM::IsArbitrationLost_I2C()
-{
-	return ( sercom->I2CM.STATUS.reg & SERCOM_I2CM_STATUS_ARBLOST );
-}
-
-bool SERCOM::IsBusError_I2C()
-{
-	return ( sercom->I2CM.STATUS.bit.BUSERR );
-}
-
-bool SERCOM::CheckInterruptMB_I2C()
-{
-	return ( sercom->I2CM.INTFLAG.reg & SERCOM_I2CM_INTFLAG_MB );
-}
-
-bool SERCOM::CheckInterruptSB_I2C()
-{
-	return ( sercom->I2CM.INTFLAG.reg & SERCOM_I2CM_INTFLAG_SB ); 
-}
-
-bool SERCOM::CheckInterruptERROR_I2C()
-{
-	return ( sercom->I2CM.INTFLAG.reg & SERCOM_I2CM_INTFLAG_ERROR ); 
-}
-
-
-
-bool SERCOM::HasBusOwnership_I2C()
-{
-	return ( sercom->I2CM.STATUS.reg & SERCOM_I2CM_STATUS_BUSSTATE( EI2CBusState::OWNER ) );
-}
-
-bool SERCOM::IsMasterMode_I2C()
-{
-	return ( sercom->I2CS.CTRLA.bit.MODE == EI2CMode::MASTER );
-}
-
-bool SERCOM::IsAvailable_I2C()
-{
-	return m_isAvailable;
+	// Setting INTFLAG.ERROR to 1 clears the interrupt
+	sercom->I2CM.INTFLAG.reg = SERCOM_I2CM_INTFLAG_ERROR;
 }
 
 
