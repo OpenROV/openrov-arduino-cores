@@ -24,12 +24,4 @@ public:
   int32_t Transfer();
 
 private:
-  // Constants
-  const uint16_t    m_kTRise_ns = 215;
-
-  int32_t SendAddress();
-  int32_t WaitForBusActivity();
-  int32_t HandleTransactionResults();
-  
-  int32_t SendStop();
 };
