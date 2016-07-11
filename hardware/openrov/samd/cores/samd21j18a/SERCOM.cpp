@@ -895,9 +895,7 @@ int32_t SERCOM::FinishTransaction_I2C( uint8_t flagsIn )
 	{
 		// TODO: May be unnecessary 
 		SendStop_I2C();
-
 		m_isBusy = false;
-
 		ClearInterruptERROR_I2C();
 
 		return I2C::ERetCode::ERR_BUS;
