@@ -693,10 +693,7 @@ sercom_i2cm_data_reg_t SERCOM::ReadRegisterDATA_I2C()
 	return sercom->I2CM.DATA.reg;
 }
 
-// ------------------------
-// IN PROGRESS
-
-int32_t PerformTransaction_I2C( TTransaction *transactionIn )
+int32_t SERCOM::PerformTransaction_I2C( TTransaction *transactionIn )
 {
 	int32_t ret = 0;
 
@@ -904,7 +901,6 @@ int32_t SERCOM::FinishTransaction_I2C( uint8_t flagsIn )
 	return I2C::ERetCode::SUCCESS;
 }
 
-// Check
 void SERCOM::ClearInterruptMB_I2C()
 {
 	// Setting INTFLAG.MB to 1 clears the interrupt
