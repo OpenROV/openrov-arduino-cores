@@ -463,7 +463,7 @@ int32_t SERCOM::InitMasterMode_I2C( uint32_t baudRateIn, uint16_t optionsIn )
 	// Set sercom peripheral to operate in I2C Master Mode
 	SetBitsCTRLA_I2C( SERCOM_I2CM_CTRLA_MODE_I2C_MASTER );
 	
-	// Set other options
+	// TODO: Set other options
 	// sercom->I2CM.CTRLA.reg = SERCOM_I2CM_CTRLA_LOWTOUTEN			// SCL low timeout
 		// | SERCOM_I2CM_CTRLA_INACTOUT( 0x3 )						// Inactivity timeout
 		// | SERCOM_I2CM_CTRLA_MEXTTOEN;							// Cumulative transaction time timeout
@@ -693,7 +693,7 @@ sercom_i2cm_data_reg_t SERCOM::ReadRegisterDATA_I2C()
 	return sercom->I2CM.DATA.reg;
 }
 
-int32_t SERCOM::PerformTransaction_I2C( TTransaction *transactionIn )
+int32_t SERCOM::PerformTransfer_I2C( TTransfer *transferIn )
 {
 	int32_t ret = 0;
 
@@ -707,12 +707,12 @@ int32_t SERCOM::PerformTransaction_I2C( TTransaction *transactionIn )
 	m_isBusy = true;
 	
 	// Copy the message to be transferred
-	m_transaction = *transactionIn;
+	m_transfer = *transferIn;
 
 	// Start transaction
 	ret = StartTransaction_I2C();
 
-	// Handle any errors from initial part of transaction
+	// Handle any errors from initial transaction
 	if( ret )
 	{
 		if( ret == I2C::ERetCode::ERR_TIMEOUT )
@@ -757,11 +757,17 @@ int32_t SERCOM::PerformTransaction_I2C( TTransaction *transactionIn )
 
 int32_t SERCOM::StartTransaction_I2C()
 {
+	// Perform bounds checking on slave address
+	if( m_transfer.slaveAddress > 0x7F )
+	{
+		return I2C::ERetCode::ERR_BAD_ADDRESS;
+	}
+
 	int32_t ret;
 	uint8_t flags = 0;
 	uint8_t sclsm = ReadBitCTRLA_SCLSM_I2C();
 
-	if( m_transaction.length == 1 && sclsm )
+	if( m_transfer.length == 1 && sclsm )
 	{
 		// Prepare a NACK to be sent automatically after transmitting the address
 		PrepareNack_I2C();
@@ -773,7 +779,7 @@ int32_t SERCOM::StartTransaction_I2C()
 	}
 
 	// Set the address and R/W bit
-	WriteADDR_I2C( ( addressIn << 1 ) | m_transaction.action );
+	WriteADDR_I2C( ( addressIn << 1 ) | m_transfer.action );
 
 	// Wait for interrupts
 	ret = WaitForInterrupt_I2C( flags );
@@ -800,9 +806,8 @@ int32_t SERCOM::FinishTransaction_I2C( uint8_t flagsIn )
 			// Arbitration lost
 			ClearInterruptMB_I2C();
 
+			// TODO: May need to specify that we kill it here
 			// Now that MB is cleared, the while loop in transfer will time out
-
-			m_transaction.failed = true;
 			m_isBusy = false;
 
 			if( status & SERCOM_I2CM_STATUS_BUSERR ) 
@@ -819,31 +824,34 @@ int32_t SERCOM::FinishTransaction_I2C( uint8_t flagsIn )
 			// Handle NACK from slave
 			if( status & SERCOM_I2CM_STATUS_RXNACK ) 
 			{
-				if( m_transaction.length > 0 ) 
+				if( m_transfer.busCommand == I2C::EBusCommand::STOP )
 				{
-					m_transaction.failed = true;
+					SendStop_I2C();
 				}
 
-				SendStop_I2C();
 				m_isBusy = false;
 
 				return I2C::ERetCode::NACK;
 			}
 
 			// Handle end of transfer
-			if( m_transaction.length == 0 ) 
+			if( m_transfer.length == 0 ) 
 			{
-				SendStop_I2C();
+				if( m_transfer.busCommand == I2C::EBusCommand::STOP )
+				{
+					SendStop_I2C();
+				}
+
 				m_isBusy = false;
 			} 
 			else 
 			{
 				// Write the next byte of data - this will also clear the MB intflag
-				WriteDATA_I2C( *m_transaction.buffer );
+				WriteDATA_I2C( *m_transfer.buffer );
 
-				// Move forward in transaction buffer
-				m_transaction.buffer++;
-				m_transaction.length--;
+				// Move forward in transfer buffer
+				m_transfer.buffer++;
+				m_transfer.length--;
 			}
 
 			return I2C::ERetCode::SUCCESS;
@@ -851,13 +859,13 @@ int32_t SERCOM::FinishTransaction_I2C( uint8_t flagsIn )
 	}
 	else if( flags & I2C::EInterruptFlags::INTFLAG_SB )
 	{
-		if( ( m_transaction.length > 0 ) && !( status & SERCOM_I2CM_STATUS_RXNACK ) ) 
+		if( ( m_transfer.length > 0 ) && !( status & SERCOM_I2CM_STATUS_RXNACK ) ) 
 		{
 			// Slave accepted read request and there are more bytes to read
-			m_transaction.length--;
+			m_transfer.length--;
 
 			// Last byte, prepare NACK if necessary
-			if( ( m_transaction.length == 0 && !sclsm ) || ( m_transaction.length == 1 && sclsm ) ) 
+			if( ( m_transfer.length == 0 && !sclsm ) || ( m_transfer.length == 1 && sclsm ) ) 
 			{
 				PrepareNack_I2C();
 			}
@@ -867,12 +875,16 @@ int32_t SERCOM::FinishTransaction_I2C( uint8_t flagsIn )
 			 * CTRLB.ACKACT, CTRLB.SMEN **/
 
 			// Read byte from DATA register
-			*m_transaction.buffer++ = ReadRegisterDATA_I2C();
+			*m_transfer.buffer++ = ReadRegisterDATA_I2C();
 
 			// Transaction complete
-			if( m_transaction.length == 0 ) 
+			if( m_transfer.length == 0 ) 
 			{
-				SendStop_I2C();
+				if( m_transfer.busCommand == I2C::EBusCommand::STOP )
+				{
+					SendStop_I2C();
+				}
+
 				m_isBusy = false;
 			}
 		} 
@@ -888,11 +900,18 @@ int32_t SERCOM::FinishTransaction_I2C( uint8_t flagsIn )
 
 		ClearInterruptSB_I2C();
 	}
-	else if( flags & I2C::EInterruptFlags::INTFLAG_ERROR )
+	if( flags & I2C::EInterruptFlags::INTFLAG_ERROR )
 	{
-		// TODO: May be unnecessary 
+		// TODO:
+		// Handle MEXTTOUT, LOWTOUT, ARBLOST, BUSERR here
+
+		// TODO: May be unnecessary or perhaps should be moved elsewhere
 		SendStop_I2C();
 		m_isBusy = false;
+
+		// Clear all interrupts
+		ClearInterruptMB_I2C();
+		ClearInterruptSB_I2C();
 		ClearInterruptERROR_I2C();
 
 		return I2C::ERetCode::ERR_BUS;

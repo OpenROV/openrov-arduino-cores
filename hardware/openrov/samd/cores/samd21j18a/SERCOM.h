@@ -186,12 +186,11 @@ namespace I2C
 		INTFLAG_ERROR	= (1 << 7)
 	};
 	
-	struct TTransaction
+	struct TTransfer
 	{
 		uint8_t 	slaveAddress;
 		EBusCommand busCommand;
 		EAction 	action;
-		bool		failed;
 
 		uint32_t	length;
 		uint8_t		*buffer;
@@ -253,7 +252,7 @@ public:
 	int32_t WaitForIdleBusState_I2C();
 	int32_t WaitForInterrupt_I2C( uint8_t &flagsOut );
 
-	int32_t PerformTransaction_I2C( TTransaction *transactionIn );
+	int32_t PerformTransfer_I2C( TTransfer *transferIn );
 	int32_t StartTransaction_I2C();
 	int32_t FinishTransaction_I2C( uint8_t flagsIn );
 
@@ -306,7 +305,7 @@ private:
 
 	// ----------------
 	// I2C attributes
-	TTransaction	m_transaction;
+	TTransfer	m_transfer;
 
 	bool 			m_isInitialized	= false;
 	bool			m_isBusy		= false;

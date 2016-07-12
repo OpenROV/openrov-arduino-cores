@@ -1,6 +1,8 @@
 #pragma once
 
+#include "variant.h"
 #include "SERCOM.h"
+#include "RingBuffer.h"
 
 // Options
 // TODO
@@ -12,7 +14,7 @@ public:
   CI2C( SERCOM *s, uint8_t pinSDA, uint8_t pinSCL );
   virtual ~CI2C();
 
-  I2C::ERetCode Enable( uint32_t baudRateIn, uint16_t optionsIn );
+  I2C::ERetCode Enable( uint32_t baudRateIn = kDefaultBaudRate, uint16_t optionsIn );
   I2C::ERetCode Disable();
   I2C::ERetCode Scan();
 
@@ -30,8 +32,8 @@ public:
   I2C::ERetCode WriteWords( uint8_t slaveAddressIn, uint8_t registerIn, uint16_t *dataIn, uint8_t numberWordsIn );
 
   // Direct read operations (Uses user provided buffer)
-  I2C::ERetCode ReadByte( uint8_t slaveAddressIn, uint8_t registerIn, uint8_t &dataOut );
-  I2C::ERetCode ReadWord( uint8_t slaveAddressIn, uint8_t registerIn, uint16_t &dataOut );
+  I2C::ERetCode ReadByte( uint8_t slaveAddressIn, uint8_t registerIn, uint8_t *dataOut );
+  I2C::ERetCode ReadWord( uint8_t slaveAddressIn, uint8_t registerIn, uint16_t *dataOut );
 
   I2C::ERetCode ReadBytes( uint8_t slaveAddressIn, uint8_t registerIn, uint8_t *dataOut, uint8_t numberBytesIn );
   I2C::ERetCode ReadWords( uint8_t slaveAddressIn, uint8_t registerIn, uint16_t *dataOut, uint8_t numberWordsIn );
@@ -47,13 +49,35 @@ public:
 
 private:
   // Attributes
-  I2C::TTransaction m_transaction         = {0};
+  I2C::TTransfer m_transfer                      = {0};
 
-  const uint8_t kBufferSize_bytes         = 32;
+  static const uint8_t kBufferSize_bytes         = 32;
+  static const uint32_t kDefaultBaudRate         = 100000;
 
-  uint8_t m_pBuffer[ kBufferSize_bytes ]  = {0};
-  uint8_t m_bytesAvailable                = 0;
+  RingBuffer 	m_rxBuffer;                                       // Intermediate buffer that user can request bytes from
+  uint8_t     m_pTransferBuffer[ kBufferSize_bytes ] = {0};  // Internal buffer used for single byte reads and writes, and buffered reads
+  uint8_t     m_bytesAvailable = 0;
 
-  // Methods
-  I2C::ERetCode PerformTransfer();
+  SERCOM 			*m_pSercom;
+  uint8_t 		m_pinSDA;
+  uint8_t 		m_pinSCL;
 };
+
+#if WIRE_INTERFACES_COUNT > 0
+  extern CI2C I2C0;
+#endif
+#if WIRE_INTERFACES_COUNT > 1
+  extern CI2C I2C1;
+#endif
+#if WIRE_INTERFACES_COUNT > 2
+  extern CI2C I2C2;
+#endif
+#if WIRE_INTERFACES_COUNT > 3
+  extern CI2C I2C3;
+#endif
+#if WIRE_INTERFACES_COUNT > 4
+  extern CI2C I2C4;
+#endif
+#if WIRE_INTERFACES_COUNT > 5
+  extern CI2C I2C5;
+#endif

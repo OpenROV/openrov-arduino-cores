@@ -47,6 +47,8 @@ class TwoWire : public Stream
     uint8_t requestFrom(uint8_t address, size_t quantity, bool stopBit);
     uint8_t requestFrom(uint8_t address, size_t quantity);
 
+    // Override Print's write() functions
+    using Print::write;
     size_t write(uint8_t data);
     size_t write(const uint8_t * data, size_t quantity);
 
@@ -54,11 +56,9 @@ class TwoWire : public Stream
     virtual int read(void);
     virtual int peek(void);
     virtual void flush(void);
+    
     void onReceive(void(*)(int));
     void onRequest(void(*)(void));
-
-    using Print::write;
-
     void onService(void);
 
   private:
