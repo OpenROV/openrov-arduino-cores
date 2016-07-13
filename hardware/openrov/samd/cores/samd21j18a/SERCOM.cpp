@@ -662,6 +662,9 @@ I2C::ERetCode SERCOM::FinishTransaction_I2C( uint8_t flagsIn )
 				// Write the next byte of data - this will also clear the MB intflag
 				WriteDATA_I2C( *m_pTransfer->buffer );
 
+				Serial.print( "Wrote byte: " );
+				Serial.println( *m_pTransfer->buffer );
+
 				// Move forward in transfer buffer
 				m_pTransfer->buffer++;
 				m_pTransfer->length--;
@@ -687,7 +690,12 @@ I2C::ERetCode SERCOM::FinishTransaction_I2C( uint8_t flagsIn )
 
 			// Read byte from DATA register
 			// NOTE: If SMEN is enabled, this will automatically trigger an ACK/NACK and clear the SB interrupt flag
-			*m_pTransfer->buffer++ = ReadRegisterDATA_I2C();
+			uint8_t tmp = ReadRegisterDATA_I2C();
+
+			Serial.print( "Read byte: " );
+			Serial.println( tmp );
+
+			*m_pTransfer->buffer++ = tmp;
 
 			// Transaction complete
 			if( m_pTransfer->length == 0 ) 
