@@ -520,7 +520,7 @@ I2C::ERetCode SERCOM::WaitForInterrupt_I2C( uint8_t &flagsOut )
 
 I2C::ERetCode SERCOM::PerformTransfer_I2C( I2C::TTransfer *transferIn )
 {
-	I2C::ERetCode ret = 0;
+	I2C::ERetCode ret;
 
 	// Check to see if bus is idle or owner
 	if( !IsBusStateIdle_I2C() || !IsBusStateOwner_I2C() )
@@ -533,7 +533,7 @@ I2C::ERetCode SERCOM::PerformTransfer_I2C( I2C::TTransfer *transferIn )
 	m_transferActive = true;
 	
 	// Copy the message to be transferred
-	m_pTransfer = *transferIn;
+	m_pTransfer = transferIn;
 
 	if( m_pTransfer == nullptr )
 	{
@@ -574,11 +574,11 @@ I2C::ERetCode SERCOM::StartTransaction_I2C()
 		return I2C::ERetCode::ERR_BAD_ADDRESS;
 	}
 
-	I2C::ERetCode ret 	= 0;
+	I2C::ERetCode ret;
 	uint8_t flags 	= 0;
 
 	// For reads, prepare ACK/NACK to be sent after reading the data
-	if( m_pTransfer->length == 1 && m_pTransfer->setSCLSM )
+	if( m_pTransfer->length == 1 && m_i2cOptions.setSCLSM )
 	{
 		// Only a one byte transaction, respond with NACK to end transaction with slave
 		PrepareNack_I2C();
@@ -590,7 +590,7 @@ I2C::ERetCode SERCOM::StartTransaction_I2C()
 	}
 
 	// Set the address and R/W bit
-	WriteADDR_I2C( ( addressIn << 1 ) | m_pTransfer->action );
+	WriteADDR_I2C( ( m_pTransfer->slaveAddress << 1 ) | m_pTransfer->action );
 
 	// Wait for interrupts
 	ret = WaitForInterrupt_I2C( flags );
@@ -632,7 +632,7 @@ I2C::ERetCode SERCOM::FinishTransaction_I2C( uint8_t flagsIn )
 			}
 
 			// Otherwise, bad address/non-existent slave
-			return I2C::ERetCode::BAD_ADDRESS;
+			return I2C::ERetCode::ERR_BAD_ADDRESS;
 		}
 		else
 		{
@@ -650,7 +650,7 @@ I2C::ERetCode SERCOM::FinishTransaction_I2C( uint8_t flagsIn )
 			if( m_pTransfer->length == 0 ) 
 			{
 				// If the user intends to perform another transfer after this, don't send a stop. The next ADDR write will automatically send a repeated start
-				if( !m_i2cOptions.issueRepeatedStart )
+				if( !m_pTransfer->issueRepeatedStart )
 				{
 					SendBusCommand_I2C( I2C::EBusCommand::STOP );
 				}
@@ -693,7 +693,7 @@ I2C::ERetCode SERCOM::FinishTransaction_I2C( uint8_t flagsIn )
 			if( m_pTransfer->length == 0 ) 
 			{
 				// If the user intends to perform another transfer after this, don't send a stop. The next ADDR write will automatically send a repeated start
-				if( !m_i2cOptions.issueRepeatedStart )
+				if( !m_pTransfer->issueRepeatedStart )
 				{
 					SendBusCommand_I2C( I2C::EBusCommand::STOP );
 				}
@@ -782,16 +782,6 @@ bool SERCOM::IsBusStateOwner_I2C()
 sercom_i2cm_intflag_reg_t SERCOM::ReadRegisterINTFLAG_I2C()
 {
 	return sercom->I2CM.INTFLAG.reg;
-}
-
-void SERCOM::SendBusCommand_I2C( I2C::EBusCommand::STOP )
-{
-	SendBusCommand_I2C( I2C::EBusCommand::STOP );
-}
-
-void SERCOM::SendRepeatedStart_I2C()
-{
-	SendBusCommand_I2C( I2C::EBusCommand::REPEAT_START );
 }
 
 void SERCOM::SendBusCommand_I2C( I2C::EBusCommand commandIn )
