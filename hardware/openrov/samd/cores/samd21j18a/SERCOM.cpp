@@ -592,8 +592,13 @@ I2C::ERetCode SERCOM::StartTransaction_I2C()
 	Serial.print( "Action is : " );
 	Serial.println( m_pTransfer->action );
 
+	uint32_t tmp = (uint32_t)( ( m_pTransfer->slaveAddress << 1 ) | m_pTransfer->action );
+
+	Serial.print( "Writing address : " );
+	Serial.println( tmp );
+
 	// Set the address and R/W bit
-	WriteADDR_I2C( ( m_pTransfer->slaveAddress << 1 ) | m_pTransfer->action );
+	WriteADDR_I2C( tmp );
 
 	// Wait for interrupts
 	ret = WaitForInterrupt_I2C( flags );
@@ -615,6 +620,9 @@ I2C::ERetCode SERCOM::FinishTransaction_I2C( uint8_t flagsIn )
 	if( flagsIn & I2C::EInterruptFlags::INTFLAG_MB )
 	{
 		Serial.println( "MB is set" );
+
+		Serial.print( "Length: " );
+		Serial.println( m_pTransfer->length );
 
 		if( status & SERCOM_I2CM_STATUS_ARBLOST ) 
 		{
@@ -686,6 +694,9 @@ I2C::ERetCode SERCOM::FinishTransaction_I2C( uint8_t flagsIn )
 	else if( flagsIn & I2C::EInterruptFlags::INTFLAG_SB )
 	{
 		Serial.println( "SB is set" );
+
+		Serial.print( "Length: " );
+		Serial.println( m_pTransfer->length );
 
 		if( ( m_pTransfer->length > 0 ) && !( status & SERCOM_I2CM_STATUS_RXNACK ) ) 
 		{
