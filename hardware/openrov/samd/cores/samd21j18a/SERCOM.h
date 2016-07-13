@@ -260,7 +260,7 @@ public:
 	int32_t WaitForIdleBusState_I2C();
 	int32_t WaitForInterrupt_I2C( uint8_t &flagsOut );
 
-	int32_t PerformTransfer_I2C( TTransfer *transferIn );
+	int32_t PerformTransfer_I2C( I2C::TTransfer *transferIn );
 	int32_t StartTransaction_I2C();
 	int32_t FinishTransaction_I2C( uint8_t flagsIn );
 
