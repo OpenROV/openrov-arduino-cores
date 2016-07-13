@@ -487,12 +487,13 @@ void SERCOM::WaitForIdleBusState_I2C()
 	// Wait for bus to move from Unknown state to Idle. Can also be moved to idle by INACTOUT triggering
 	while( !IsBusStateIdle_I2C() )
 	{
-		++m_timer;
+		m_timer++;
 
 		// Bus state never changed, something is wrong and the I2C bus should not be used
-		if( m_timer > m_i2cOptions.timeoutPeriod )
+		if( m_timer >= m_i2cOptions.timeoutPeriod )
 		{
 			// Force to idle
+			Serial.println( m_timer );
 			SetBitsSTATUS_I2C( SERCOM_I2CM_STATUS_BUSSTATE( I2C::EBusState::IDLE ) );
 		}
 	}
