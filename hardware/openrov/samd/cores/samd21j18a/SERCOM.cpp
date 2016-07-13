@@ -493,7 +493,7 @@ void SERCOM::WaitForIdleBusState_I2C()
 		if( m_timer > m_i2cOptions.timeoutPeriod )
 		{
 			// Force to idle
-			SetBitsSTATUS_I2C( SERCOM_I2CM_STATUS_BUSSTATE( EI2CBusState::IDLE ) );
+			SetBitsSTATUS_I2C( SERCOM_I2CM_STATUS_BUSSTATE( I2C::EBusState::IDLE ) );
 		}
 	}
 }
@@ -518,7 +518,7 @@ I2C::ERetCode SERCOM::WaitForInterrupt_I2C( uint8_t &flagsOut )
 	return I2C::ERetCode::SUCCESS;
 }
 
-I2C::ERetCode SERCOM::PerformTransfer_I2C( TTransfer *transferIn )
+I2C::ERetCode SERCOM::PerformTransfer_I2C( I2C::TTransfer *transferIn )
 {
 	I2C::ERetCode ret = 0;
 
