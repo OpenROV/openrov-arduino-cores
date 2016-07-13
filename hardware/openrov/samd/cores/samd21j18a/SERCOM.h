@@ -163,7 +163,7 @@ namespace I2C
 		ERR_BUS               		= -5,  	// Bus error
 		ERR_BUSY              		= -6,  	// Device busy
 		ERR_PACKAGE_COLLISION 		= -7,  	// Package collision
-		ERR_TIMEOUT					= -8            
+		ERR_TIMEOUT					= -8,            
 		ERR_INVALID_ARG        		= -9,
 		ERR_DENIED               	= -10,
 		ERR_ALREADY_INITIALIZED  	= -11,
