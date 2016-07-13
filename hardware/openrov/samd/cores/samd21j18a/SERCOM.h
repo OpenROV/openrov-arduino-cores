@@ -145,12 +145,6 @@ namespace I2C
 		READ	= 0x1
 	};
   
-  	enum EAckAction: uint8_t
-	{
-		ACK 	= 0x0,
-		NACK 	= 0x1
-	};
-	
 	enum EBusCommand: uint8_t 
 	{
 		NO_ACTION 		= 0x0,
