@@ -589,16 +589,8 @@ I2C::ERetCode SERCOM::StartTransaction_I2C()
 		PrepareAck_I2C();
 	}
 
-	Serial.print( "Action is : " );
-	Serial.println( m_pTransfer->action );
-
-	uint32_t tmp = (uint32_t)( ( m_pTransfer->slaveAddress << 1 ) | m_pTransfer->action );
-
-	Serial.print( "Writing address : " );
-	Serial.println( tmp );
-
 	// Set the address and R/W bit
-	WriteADDR_I2C( tmp );
+	WriteADDR_I2C( ( m_pTransfer->slaveAddress << 1 ) | m_pTransfer->action );
 
 	// Wait for interrupts
 	ret = WaitForInterrupt_I2C( flags );
@@ -619,11 +611,6 @@ I2C::ERetCode SERCOM::FinishTransaction_I2C( uint8_t flagsIn )
 
 	if( flagsIn & I2C::EInterruptFlags::INTFLAG_MB )
 	{
-		Serial.println( "MB is set" );
-
-		Serial.print( "Length: " );
-		Serial.println( m_pTransfer->length );
-
 		if( status & SERCOM_I2CM_STATUS_ARBLOST ) 
 		{
 			// We can arrive here in multiple ways:
@@ -662,12 +649,9 @@ I2C::ERetCode SERCOM::FinishTransaction_I2C( uint8_t flagsIn )
 			// Handle end of transfer
 			if( m_pTransfer->length == 0 ) 
 			{
-				Serial.println( "Write transfer ended" );
-
 				// If the user intends to perform another transfer after this, don't send a stop. The next ADDR write will automatically send a repeated start
 				if( !m_pTransfer->issueRepeatedStart )
 				{
-					Serial.println( "STOP" );
 					SendBusCommand_I2C( I2C::EBusCommand::STOP );
 				}
 
@@ -677,9 +661,6 @@ I2C::ERetCode SERCOM::FinishTransaction_I2C( uint8_t flagsIn )
 			{
 				// Write the next byte of data - this will also clear the MB intflag
 				WriteDATA_I2C( *m_pTransfer->buffer );
-
-				Serial.print( "Wrote byte: " );
-				Serial.println( *m_pTransfer->buffer );
 
 				// Move forward in transfer buffer
 				m_pTransfer->buffer++;
@@ -693,10 +674,6 @@ I2C::ERetCode SERCOM::FinishTransaction_I2C( uint8_t flagsIn )
 	}
 	else if( flagsIn & I2C::EInterruptFlags::INTFLAG_SB )
 	{
-		Serial.println( "SB is set" );
-
-		Serial.print( "Length: " );
-		Serial.println( m_pTransfer->length );
 
 		if( ( m_pTransfer->length > 0 ) && !( status & SERCOM_I2CM_STATUS_RXNACK ) ) 
 		{
@@ -712,12 +689,9 @@ I2C::ERetCode SERCOM::FinishTransaction_I2C( uint8_t flagsIn )
 			// Transaction complete
 			if( m_pTransfer->length == 0 ) 
 			{
-				Serial.println( "Read ended" );
-
 				// If the user intends to perform another transfer after this, don't send a stop. The next ADDR write will automatically send a repeated start
 				if( !m_pTransfer->issueRepeatedStart )
 				{
-					Serial.println( "STOP" );
 					SendBusCommand_I2C( I2C::EBusCommand::STOP );
 				}
 
@@ -726,17 +700,11 @@ I2C::ERetCode SERCOM::FinishTransaction_I2C( uint8_t flagsIn )
 
 			// Read byte from DATA register
 			// NOTE: If SMEN is enabled, this will automatically trigger an ACK/NACK and clear the SB interrupt flag
-			uint8_t tmp = ReadRegisterDATA_I2C();
-
-			Serial.print( "Read byte: " );
-			Serial.println( tmp );
-
-			*m_pTransfer->buffer++ = tmp;
+			*m_pTransfer->buffer++ = ReadRegisterDATA_I2C();
 
 			// If smart mode is off, we need to explicitly send a bus command to get the ACK to fire to receive the next byte
 			if( !m_i2cOptions.setSMEN )
 			{
-				Serial.println( "NO SMEN read" );
 				SendBusCommand_I2C( I2C::EBusCommand::BYTE_READ );
 			}
 		} 
