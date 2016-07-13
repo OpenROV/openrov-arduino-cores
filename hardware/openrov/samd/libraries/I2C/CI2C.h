@@ -14,7 +14,7 @@ public:
   CI2C( SERCOM *s, uint8_t pinSDA, uint8_t pinSCL );
   virtual ~CI2C();
 
-  I2C::ERetCode Enable( uint32_t baudRateIn = kDefaultBaudRate, uint16_t optionsIn );
+  I2C::ERetCode Enable( uint32_t baudRateIn, uint16_t optionsIn );
   I2C::ERetCode Disable();
   I2C::ERetCode Scan();
 
