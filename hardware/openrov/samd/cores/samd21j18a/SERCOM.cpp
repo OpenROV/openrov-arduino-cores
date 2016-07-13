@@ -911,21 +911,21 @@ void SERCOM::SetBitsSTATUS_I2C( sercom_i2cm_status_reg_t dataIn )
 {
 	SyncSysOp_I2C();
 	
-	sercom->I2CM.CTRLB.reg |= dataIn;
+	sercom->I2CM.STATUS.reg |= dataIn;
 }
 
 void SERCOM::ClearBitsSTATUS_I2C( sercom_i2cm_status_reg_t dataIn )
 {
 	SyncSysOp_I2C();
 	
-	sercom->I2CM.CTRLB.reg &= ~dataIn;
+	sercom->I2CM.STATUS.reg &= ~dataIn;
 }
 
 void SERCOM::WriteSTATUS_I2C( sercom_i2cm_status_reg_t dataIn )
 {
 	SyncSysOp_I2C();
 	
-	sercom->I2CM.CTRLB.reg = dataIn;
+	sercom->I2CM.STATUS.reg = dataIn;
 }
 
 /*	 =========================
