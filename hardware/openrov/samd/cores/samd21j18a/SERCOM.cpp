@@ -377,7 +377,7 @@ bool SERCOM::isDataRegisterEmptySPI()
 // ===== Sercom I2C
 // =========================
 
-int32_t SERCOM::InitMasterMode_I2C( const I2C::TOptions &optionsIn )
+I2C::ERetCode SERCOM::InitMasterMode_I2C( const I2C::TOptions &optionsIn )
 {
 	// Set up interrupts and clocks
 	InitClockNVIC();
@@ -425,7 +425,7 @@ void SERCOM::DeinitMasterMode_I2C()
 	m_isInitialized = false;
 }
 
-int32_t SERCOM::SetBaudRate_I2C( uint32_t baudRateIn )
+I2C::ERetCode SERCOM::SetBaudRate_I2C( uint32_t baudRateIn )
 {
 	uint32_t tmp;
 
@@ -498,7 +498,7 @@ void SERCOM::WaitForIdleBusState_I2C()
 	}
 }
 
-int32_t SERCOM::WaitForInterrupt_I2C( uint8_t &flagsOut )
+I2C::ERetCode SERCOM::WaitForInterrupt_I2C( uint8_t &flagsOut )
 {
 	m_timer = 0;
 
@@ -518,9 +518,9 @@ int32_t SERCOM::WaitForInterrupt_I2C( uint8_t &flagsOut )
 	return I2C::ERetCode::SUCCESS;
 }
 
-int32_t SERCOM::PerformTransfer_I2C( TTransfer *transferIn )
+I2C::ERetCode SERCOM::PerformTransfer_I2C( TTransfer *transferIn )
 {
-	int32_t ret = 0;
+	I2C::ERetCode ret = 0;
 
 	// Check to see if bus is idle or owner
 	if( !IsBusStateIdle_I2C() || !IsBusStateOwner_I2C() )
@@ -566,7 +566,7 @@ int32_t SERCOM::PerformTransfer_I2C( TTransfer *transferIn )
 	return ret;
 }
 
-int32_t SERCOM::StartTransaction_I2C()
+I2C::ERetCode SERCOM::StartTransaction_I2C()
 {
 	// Perform bounds checking on slave address
 	if( m_pTransfer->slaveAddress > 0x7F )
@@ -574,7 +574,7 @@ int32_t SERCOM::StartTransaction_I2C()
 		return I2C::ERetCode::ERR_BAD_ADDRESS;
 	}
 
-	int32_t ret 	= 0;
+	I2C::ERetCode ret 	= 0;
 	uint8_t flags 	= 0;
 
 	// For reads, prepare ACK/NACK to be sent after reading the data
@@ -604,7 +604,7 @@ int32_t SERCOM::StartTransaction_I2C()
 	return FinishTransaction_I2C( flags );
 }
 
-int32_t SERCOM::FinishTransaction_I2C( uint8_t flagsIn )
+I2C::ERetCode SERCOM::FinishTransaction_I2C( uint8_t flagsIn )
 {
 	// Get Bus Status
 	sercom_i2cm_status_reg_t status = ReadRegisterSTATUS_I2C();

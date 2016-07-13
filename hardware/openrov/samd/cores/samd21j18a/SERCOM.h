@@ -249,20 +249,20 @@ public:
 
 	// -----------------------------------------------------------------------------------------
 	/* ========== I2C ========== */
-	int32_t InitMasterMode_I2C( const I2C::TOptions &optionsIn );
+	I2C::ERetCode InitMasterMode_I2C( const I2C::TOptions &optionsIn );
 	void DeinitMasterMode_I2C();
 
-	int32_t Enable_I2C();
-	int32_t Disable_I2C();
-	int32_t Reset_I2C();
-	int32_t SetBaudRate_I2C( uint32_t baudRateIn );
+	void Enable_I2C();
+	void Disable_I2C();
+	void Reset_I2C();
+	I2C::ERetCode SetBaudRate_I2C( uint32_t baudRateIn );
 	
-	int32_t WaitForIdleBusState_I2C();
-	int32_t WaitForInterrupt_I2C( uint8_t &flagsOut );
+	void WaitForIdleBusState_I2C();
+	I2C::ERetCode WaitForInterrupt_I2C( uint8_t &flagsOut );
 
-	int32_t PerformTransfer_I2C( I2C::TTransfer *transferIn );
-	int32_t StartTransaction_I2C();
-	int32_t FinishTransaction_I2C( uint8_t flagsIn );
+	I2C::ERetCode PerformTransfer_I2C( I2C::TTransfer *transferIn );
+	I2C::ERetCode StartTransaction_I2C();
+	I2C::ERetCode FinishTransaction_I2C( uint8_t flagsIn );
 
 	void SendBusCommand_I2C( I2C::EBusCommand commandIn );
 
