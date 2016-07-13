@@ -50,6 +50,9 @@ public:
 private:
   // Attributes
   I2C::TTransfer m_transfer                      = {0};
+  I2C::TOptions m_options;
+
+  bool m_isEnabled = false;
 
   static const uint8_t kBufferSize_bytes         = 32;
   static const uint32_t kDefaultBaudRate         = 100000;
