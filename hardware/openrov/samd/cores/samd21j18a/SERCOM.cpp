@@ -830,7 +830,7 @@ void SERCOM::ClearInterruptMB_I2C()
 	//	- Writing to DATA.DATA
 	//	- Reading DATA.DATA when Smart Mode is enabled
 	//	- Writing a valid command to CTRLB.CMD
-	sercom->I2CM.INTFLAG.reg = SERCOM_I2CM_INTFLAG_MB;
+	sercom->I2CM.INTFLAG.reg |= SERCOM_I2CM_INTFLAG_MB;
 }
 
 void SERCOM::ClearInterruptSB_I2C()
@@ -841,7 +841,7 @@ void SERCOM::ClearInterruptSB_I2C()
 	//	- Writing to DATA.DATA
 	//	- Reading DATA.DATA when Smart Mode is enabled
 	//	- Writing a valid command to CTRLB.CMD
-	sercom->I2CM.INTFLAG.reg = SERCOM_I2CM_INTFLAG_SB;
+	sercom->I2CM.INTFLAG.reg |= SERCOM_I2CM_INTFLAG_SB;
 }
 
 sercom_i2cm_status_reg_t SERCOM::ReadRegisterSTATUS_I2C()
