@@ -834,12 +834,6 @@ void SERCOM::ClearInterruptSB_I2C()
 	sercom->I2CM.INTFLAG.reg = SERCOM_I2CM_INTFLAG_SB;
 }
 
-void SERCOM::ClearInterruptERROR_I2C()
-{
-	// Setting INTFLAG.ERROR to 1 clears the interrupt
-	sercom->I2CM.INTFLAG.reg = SERCOM_I2CM_INTFLAG_ERROR;
-}
-
 sercom_i2cm_status_reg_t SERCOM::ReadRegisterSTATUS_I2C()
 {
 	SyncSysOp_I2C();

@@ -270,8 +270,6 @@ public:
 	int32_t StartTransaction_I2C();
 	int32_t FinishTransaction_I2C( uint8_t flagsIn );
 
-	void SendStop_I2C();
-	void SendRepeatedStart_I2C();
 	void SendBusCommand_I2C( I2C::EBusCommand commandIn );
 
 	void PrepareNack_I2C();
@@ -284,7 +282,6 @@ public:
 
 	void ClearInterruptMB_I2C();
 	void ClearInterruptSB_I2C();
-	void ClearInterruptERROR_I2C();
 
 	// -----------------------
 	// Reads
