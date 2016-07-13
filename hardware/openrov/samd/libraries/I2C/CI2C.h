@@ -21,7 +21,7 @@ public:
   bool IsAvailable();
 
   // Write operations
-  I2C::ERetCode WriteByte( uint8_t slaveAddressIn, uint8_t dataIn );
+  I2C::ERetCode WriteByte( uint8_t slaveAddressIn, uint8_t dataIn, bool issueRepeatedStart = false );
   I2C::ERetCode WriteByte( uint8_t slaveAddressIn, uint8_t registerIn, uint8_t dataIn );
   I2C::ERetCode WriteWord( uint8_t slaveAddressIn, uint16_t dataIn );
   I2C::ERetCode WriteWord( uint8_t slaveAddressIn, uint8_t registerIn, uint16_t dataIn );
