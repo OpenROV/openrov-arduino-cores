@@ -589,6 +589,9 @@ I2C::ERetCode SERCOM::StartTransaction_I2C()
 		PrepareAck_I2C();
 	}
 
+	Serial.print( "Action is : " );
+	Serial.println( m_pTransfer->action );
+
 	// Set the address and R/W bit
 	WriteADDR_I2C( ( m_pTransfer->slaveAddress << 1 ) | m_pTransfer->action );
 
@@ -611,6 +614,8 @@ I2C::ERetCode SERCOM::FinishTransaction_I2C( uint8_t flagsIn )
 
 	if( flagsIn & I2C::EInterruptFlags::INTFLAG_MB )
 	{
+		Serial.println( "MB is set" );
+
 		if( status & SERCOM_I2CM_STATUS_ARBLOST ) 
 		{
 			// We can arrive here in multiple ways:
@@ -649,9 +654,12 @@ I2C::ERetCode SERCOM::FinishTransaction_I2C( uint8_t flagsIn )
 			// Handle end of transfer
 			if( m_pTransfer->length == 0 ) 
 			{
+				Serial.println( "Write transfer ended" );
+
 				// If the user intends to perform another transfer after this, don't send a stop. The next ADDR write will automatically send a repeated start
 				if( !m_pTransfer->issueRepeatedStart )
 				{
+					Serial.println( "STOP" );
 					SendBusCommand_I2C( I2C::EBusCommand::STOP );
 				}
 
@@ -677,6 +685,8 @@ I2C::ERetCode SERCOM::FinishTransaction_I2C( uint8_t flagsIn )
 	}
 	else if( flagsIn & I2C::EInterruptFlags::INTFLAG_SB )
 	{
+		Serial.println( "SB is set" );
+
 		if( ( m_pTransfer->length > 0 ) && !( status & SERCOM_I2CM_STATUS_RXNACK ) ) 
 		{
 			// Slave accepted read request and there are more bytes to read
@@ -700,9 +710,12 @@ I2C::ERetCode SERCOM::FinishTransaction_I2C( uint8_t flagsIn )
 			// Transaction complete
 			if( m_pTransfer->length == 0 ) 
 			{
+				Serial.println( "Read ended" );
+
 				// If the user intends to perform another transfer after this, don't send a stop. The next ADDR write will automatically send a repeated start
 				if( !m_pTransfer->issueRepeatedStart )
 				{
+					Serial.println( "STOP" );
 					SendBusCommand_I2C( I2C::EBusCommand::STOP );
 				}
 
@@ -713,6 +726,7 @@ I2C::ERetCode SERCOM::FinishTransaction_I2C( uint8_t flagsIn )
 				// If smart mode is off, we need to explicitly send a bus command to get the ACK to fire to receive the next byte
 				if( !m_i2cOptions.setSMEN )
 				{
+					Serial.println( "NO SMEN read" );
 					SendBusCommand_I2C( I2C::EBusCommand::BYTE_READ );
 				}
 			}
