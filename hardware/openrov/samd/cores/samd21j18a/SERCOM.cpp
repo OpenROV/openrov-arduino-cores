@@ -523,7 +523,7 @@ I2C::ERetCode SERCOM::PerformTransfer_I2C( I2C::TTransfer *transferIn )
 	I2C::ERetCode ret;
 
 	// Check to see if bus is idle or owner
-	if( !IsBusStateIdle_I2C() || !IsBusStateOwner_I2C() )
+	if( !(IsBusStateIdle_I2C() || IsBusStateOwner_I2C() ) )
 	{
 		// Bus is currently busy
 		return I2C::ERetCode::ERR_BUSY;
