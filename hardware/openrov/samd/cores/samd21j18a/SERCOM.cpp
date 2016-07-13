@@ -698,15 +698,6 @@ I2C::ERetCode SERCOM::FinishTransaction_I2C( uint8_t flagsIn )
 				PrepareNack_I2C();
 			}
 
-			// Read byte from DATA register
-			// NOTE: If SMEN is enabled, this will automatically trigger an ACK/NACK and clear the SB interrupt flag
-			uint8_t tmp = ReadRegisterDATA_I2C();
-
-			Serial.print( "Read byte: " );
-			Serial.println( tmp );
-
-			*m_pTransfer->buffer++ = tmp;
-
 			// Transaction complete
 			if( m_pTransfer->length == 0 ) 
 			{
@@ -721,14 +712,21 @@ I2C::ERetCode SERCOM::FinishTransaction_I2C( uint8_t flagsIn )
 
 				m_transferActive = false;
 			}
-			else
+
+			// Read byte from DATA register
+			// NOTE: If SMEN is enabled, this will automatically trigger an ACK/NACK and clear the SB interrupt flag
+			uint8_t tmp = ReadRegisterDATA_I2C();
+
+			Serial.print( "Read byte: " );
+			Serial.println( tmp );
+
+			*m_pTransfer->buffer++ = tmp;
+
+			// If smart mode is off, we need to explicitly send a bus command to get the ACK to fire to receive the next byte
+			if( !m_i2cOptions.setSMEN )
 			{
-				// If smart mode is off, we need to explicitly send a bus command to get the ACK to fire to receive the next byte
-				if( !m_i2cOptions.setSMEN )
-				{
-					Serial.println( "NO SMEN read" );
-					SendBusCommand_I2C( I2C::EBusCommand::BYTE_READ );
-				}
+				Serial.println( "NO SMEN read" );
+				SendBusCommand_I2C( I2C::EBusCommand::BYTE_READ );
 			}
 		} 
 		else 
@@ -867,6 +865,8 @@ uint8_t SERCOM::ReadValueSTATUS_BUSSTATE_I2C()
 
 sercom_i2cm_data_reg_t SERCOM::ReadRegisterDATA_I2C()
 {
+	SyncSysOp_I2C();
+	
 	return sercom->I2CM.DATA.reg;
 }
 
