@@ -1,5 +1,8 @@
 #include "CI2C.h"
 
+// --------------------
+// DONE
+
 CI2C::CI2C( SERCOM *s, uint8_t pinSDA, uint8_t pinSCL )
 {
 	m_pSercom					= s;
@@ -42,13 +45,6 @@ bool CI2C::IsAvailable()
 {
 	// Check sercom enabled bit
 	return m_pSercom->IsEnabled_I2C();
-}
-
-I2C::ERetCode CI2C::Scan()
-{
-	// TODO
-
-	return I2C::ERetCode::SUCCESS;
 }
 
 // Write operations
@@ -172,6 +168,9 @@ I2C::ERetCode CI2C::WriteWords( uint8_t slaveAddressIn, uint8_t registerIn, uint
 	return m_pSercom->PerformTransfer_I2C( &m_transfer );
 }
 
+// --------------------
+// WIP
+
 // Direct read operations (Uses user provided buffer)
 I2C::ERetCode CI2C::ReadByte( uint8_t slaveAddressIn, uint8_t registerIn, uint8_t *dataOut )
 {
@@ -246,8 +245,9 @@ uint16_t CI2C::NextWord()
 	return 0;
 }
 
-
-uint8_t CI2C::BytesAvailable()
+I2C::ERetCode CI2C::Scan()
 {
-	return m_bytesAvailable;
+	// TODO
+
+	return I2C::ERetCode::SUCCESS;
 }

@@ -176,7 +176,8 @@ namespace I2C
 		ERR_NOT_INITIALIZED      	= -12,
 		ERR_BAUDRATE_UNAVAILABLE 	= -13,
 		ERR_UNSUPPORTED_OP        	= -14,
-		ERR_NOT_READY				= -15
+		ERR_NOT_READY				= -15,
+		ERR_BAD_TRANSFER			= -16
 	};
 
 	enum EInterruptFlags: uint8_t
@@ -189,11 +190,24 @@ namespace I2C
 	struct TTransfer
 	{
 		uint8_t 	slaveAddress;
-		EBusCommand busCommand;
-		EAction 	action;
-
 		uint32_t	length;
 		uint8_t		*buffer;
+
+		EAction 	action;
+		bool		issueRepeatedStart;
+	};
+
+	struct TOptions
+	{
+		bool setSCLSM			= false;
+		bool setSMEN			= false;
+		bool enableINACTOUT		= false;
+		bool enableMEXTOUT		= false;
+		bool enableLOWTOUT		= false;
+
+		uint32_t baudRate		= 100000;
+		uint32_t timeoutPeriod 	= 65535;
+		uint16_t tRise_ns 		= 215;
 	};
 }
 
@@ -241,13 +255,13 @@ public:
 
 	// -----------------------------------------------------------------------------------------
 	/* ========== I2C ========== */
-	int32_t InitMasterMode_I2C( uint32_t baudRateIn, uint16_t optionsIn );
+	int32_t InitMasterMode_I2C( const I2C::TOptions &optionsIn );
 	void DeinitMasterMode_I2C();
 
 	int32_t Enable_I2C();
 	int32_t Disable_I2C();
 	int32_t Reset_I2C();
-	int32_t SetBaudRate_I2C( uint32_t baudRateIn );	
+	int32_t SetBaudRate_I2C( uint32_t baudRateIn );
 	
 	int32_t WaitForIdleBusState_I2C();
 	int32_t WaitForInterrupt_I2C( uint8_t &flagsOut );
@@ -257,6 +271,7 @@ public:
 	int32_t FinishTransaction_I2C( uint8_t flagsIn );
 
 	void SendStop_I2C();
+	void SendRepeatedStart_I2C();
 	void SendBusCommand_I2C( I2C::EBusCommand commandIn );
 
 	void PrepareNack_I2C();
@@ -271,8 +286,6 @@ public:
 	void ClearInterruptSB_I2C();
 	void ClearInterruptERROR_I2C();
 
-	bool IsEnabled_I2C();
-
 	// -----------------------
 	// Reads
 	sercom_i2cm_intflag_reg_t ReadRegisterINTFLAG_I2C();
@@ -281,6 +294,10 @@ public:
 
 	uint8_t ReadValueSTATUS_BUSSTATE_I2C();
 	uint8_t ReadValueCTRLA_SCLSM_I2C();
+
+	bool IsEnabled_I2C();
+	bool IsBusStateIdle_I2C();
+	bool IsBusStateOwner_I2C();
 	
 	// -----------------------
 	// Sets, Clears, Writes
@@ -303,20 +320,19 @@ private:
 	// Shared private members
 	Sercom* 		sercom;
 
+	// Shared private methods
+	uint8_t CalculateBaudrateSynchronous( uint32_t baudrateIn );
+	void InitClockNVIC();
+
 	// ----------------
 	// I2C attributes
-	TTransfer	m_transfer;
+	I2C::TOptions	m_i2cOptions;
+	I2C::TTransfer	*m_pTransfer		= nullptr;
 
-	bool 			m_isInitialized	= false;
-	bool			m_isBusy		= false;
-
-	uint32_t 		m_timeout 		= 0;
-	const uint16_t  m_kTRise_ns 	= 215;
-
-	// Methods
-	uint8_t CalculateBaudrateSynchronous( uint32_t baudrateIn );
-	
-	void InitClockNVIC();
+	bool 			m_isInitialized		= false;
+	bool			m_transferActive	= false;
+	uint32_t 		m_timer 			= 0;
+	const uint16_t  m_kTRise_ns 		= 215;
 };
 
 #endif
