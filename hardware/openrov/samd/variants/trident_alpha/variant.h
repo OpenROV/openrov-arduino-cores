@@ -174,9 +174,3 @@ extern Uart Serial1;
 
 #define PERIPH_WIRE1          		  sercom2
 #define WIRE1_IT_HANDLER      		  SERCOM2_Handler
-
-// TODO: What the hell is this
-#define PERIPH_SPI           		sercom5
-#define PAD_SPI_TX           		SPI_PAD_2_SCK_3
-#define PAD_SPI_RX           		SERCOM_RX_PAD_0
-
