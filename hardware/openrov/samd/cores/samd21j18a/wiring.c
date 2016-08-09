@@ -92,20 +92,27 @@ void init( void )
 
   while( ADC->STATUS.bit.SYNCBUSY == 1 );          // Wait for synchronization of registers between the clock domains
 
+  // CTRLB
   ADC->CTRLB.reg = ADC_CTRLB_PRESCALER_DIV512 |    // Divide Clock by 512.
-  					ADC_CTRLB_RESSEL_10BIT_Val;
+  					ADC_CTRLB_RESSEL_10BIT;
 
+  // SAMPLECTRL
   ADC->SAMPCTRL.reg = 0x3f;                        // Set max Sampling Time Length
 
   while( ADC->STATUS.bit.SYNCBUSY == 1 );          // Wait for synchronization of registers between the clock domains
 
+  // INPUTCTRL
   ADC->INPUTCTRL.reg = ADC_INPUTCTRL_MUXNEG_GND;   // No Negative input (Internal Ground)
 
-  // Averaging (see datasheet table in AVGCTRL register description)
+  // AVGCTRL
   ADC->AVGCTRL.reg = ADC_AVGCTRL_SAMPLENUM_1 |    // 1 sample only (no oversampling nor averaging)
                      ADC_AVGCTRL_ADJRES(0x0ul);   // Adjusting result by 0
 
+  // INPUTCTRL REFCTRL
   analogReference( AR_DEFAULT ) ; // Analog Reference is AREF pin (3.3v)
+
+
+
 
   // Initialize DAC
   // Setting clock
