@@ -177,11 +177,11 @@ extern Uart Serial4;
 #define SERIAL_PORT_HARDWARE2       Serial2
 #define SERIAL_PORT_HARDWARE_OPEN2  Serial2
 
-#define SERIAL_PORT_HARDWARE2       Serial3
-#define SERIAL_PORT_HARDWARE_OPEN2  Serial3
+#define SERIAL_PORT_HARDWARE3       Serial3
+#define SERIAL_PORT_HARDWARE_OPEN3  Serial3
 
-#define SERIAL_PORT_HARDWARE2       Serial4
-#define SERIAL_PORT_HARDWARE_OPEN2  Serial4
+#define SERIAL_PORT_HARDWARE4       Serial4
+#define SERIAL_PORT_HARDWARE_OPEN4  Serial4
 
 #define PERIPH_WIRE          		    sercom2
 #define WIRE_IT_HANDLER      		    SERCOM2_Handler
